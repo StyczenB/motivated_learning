@@ -31,6 +31,6 @@
     <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d /home/bartek/study/repo/config.rviz"/> -->
 
     <!-- Manual control. -->
-    <node pkg="rqt_robot_steering" type="rqt_robot_steering" name="rqt_robot_steering"/>
+    <!-- <node pkg="rqt_robot_steering" type="rqt_robot_steering" name="rqt_robot_steering"/> -->
 
 </launch>
