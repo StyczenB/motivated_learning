@@ -131,3 +131,6 @@ dmypy.json
 # Editors
 .vscode/
 .idea/
+
+# Except
+!turtlebot3_description/meshes/wheels
