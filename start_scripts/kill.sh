@@ -1,5 +1,5 @@
 #!/bin/bash
 
-killall gzclient
-killall gzserver
+killall -9 gzclient
+killall -9 gzserver
 

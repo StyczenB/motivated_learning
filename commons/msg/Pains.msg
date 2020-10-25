@@ -1,0 +1,8 @@
+std_msgs/Header header
+float32 curiosity
+float32 low_battery_level
+float32 condition_of_wheels
+float32 mechanical_damage
+float32 no_energy_in_charger
+float32 no_wheels_in_warehouse
+float32 no_spare_parts

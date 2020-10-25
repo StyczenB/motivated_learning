@@ -1,4 +1,9 @@
 #!/bin/bash
 
-./kill.sh
-roslaunch test.launch
+source ../../devel/setup.bash
+catkin build
+
+if [ $? -eq 0 ]; then
+    ./kill.sh
+    roslaunch test.launch
+fi

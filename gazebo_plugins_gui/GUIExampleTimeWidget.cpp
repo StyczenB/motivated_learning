@@ -11,8 +11,6 @@ namespace gazebo
     GUIExampleTimeWidget::GUIExampleTimeWidget()
         : GUIPlugin()
     {
-        ROS_ERROR("GUIExampleTimeWidget");
-
         // Set the frame background and foreground colors
         this->setStyleSheet(
             "QFrame { background-color : rgba(100, 100, 100, 255); color : white; }");

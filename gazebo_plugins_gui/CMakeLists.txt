@@ -5,10 +5,12 @@ if(POLICY CMP0100)
   cmake_policy(SET CMP0100 NEW)
 endif()
 
-set (CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  commons
 )
 
 find_package(Qt5Widgets REQUIRED)
@@ -47,11 +49,15 @@ target_link_libraries(gui_example
   ${PROTOBUF_LIBRARIES}
 )
 
-add_library(gui_spawn_widget SHARED 
+add_library(pain_dashboard SHARED 
   ${headers_MOC}
-  ExampleSpawnWidget.cc
+  pain_dashboard.cpp
 )
-target_link_libraries(gui_spawn_widget 
+add_dependencies(pain_dashboard 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(pain_dashboard 
   ${catkin_LIBRARIES}    
   ${GAZEBO_LIBRARIES}
   ${Qt5Core_LIBRARIES}

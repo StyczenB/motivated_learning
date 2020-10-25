@@ -18,36 +18,33 @@ namespace gazebo
     {
         Q_OBJECT
 
-        /// \brief Constructor
     public:
+        /// \brief Constructor
         GUIExampleTimeWidget();
 
         /// \brief Destructor
-    public:
         virtual ~GUIExampleTimeWidget();
 
         /// \brief A signal used to set the sim time line edit.
-        /// \param[in] _string String representation of sim time.
     signals:
+        /// \param[in] _string String representation of sim time.
         void SetSimTime(QString _string);
 
+    protected:
         /// \brief Callback that received world statistics messages.
         /// \param[in] _msg World statistics message that is received.
-    protected:
         void OnStats(ConstWorldStatisticsPtr &_msg);
 
+    private:
         /// \brief Helper function to format time string.
         /// \param[in] _msg Time message.
         /// \return Time formatted as a string.
-    private:
         std::string FormatTime(const msgs::Time &_msg) const;
 
         /// \brief Node used to establish communication with gzserver.
-    private:
         transport::NodePtr node;
 
         /// \brief Subscriber to world statistics messages.
-    private:
         transport::SubscriberPtr statsSub;
     };
 } // namespace gazebo

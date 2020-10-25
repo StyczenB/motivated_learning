@@ -1,4 +1,6 @@
 <launch>
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find commons)/config/logger_levels.config"/>
+
     <!-- <arg name="model" default="waffle_for_open_manipulator" doc="model type"/> -->
     <arg name="model" default="waffle" doc="model type"/>
 
@@ -18,7 +20,7 @@
         <arg name="headless" value="false"/>
         <arg name="debug" value="false"/>
         <arg name="verbose" value="true"/>
-    </include>  
+    </include>
 
     <!-- Robot description needed to spawn model. -->
     <param name="robot_description" command="$(find xacro)/xacro $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
@@ -34,5 +36,8 @@
 
     <!-- Manual control. -->
     <!-- <node pkg="rqt_robot_steering" type="rqt_robot_steering" name="rqt_robot_steering"/> -->
+
+    <node pkg="sensory_processing" type="sensory_processing_node" name="sensory_processing_node" output="screen"/>
+
 
 </launch>
