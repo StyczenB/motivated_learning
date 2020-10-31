@@ -1,9 +1,9 @@
 <launch>
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find commons)/config/logger_levels.config"/>
 
-  <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/empty.world"/>
+  <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/turtlebot3_world.world"/>
   <arg name="model" value="waffle"/>
-  <arg name="x_pos" default="0.0"/>
+  <arg name="x_pos" default="-0.5"/>
   <arg name="y_pos" default="0.0"/>
   <arg name="z_pos" default="0.0"/>
 
