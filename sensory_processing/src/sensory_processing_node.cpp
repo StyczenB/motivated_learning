@@ -12,6 +12,7 @@ int main(int argc, char** argv)
     ros::Rate r(100);
     while (ros::ok())
     {
+        commons::Timer timer;
         sensory_processing.ProcessSensoryInputs();
 
         r.sleep();

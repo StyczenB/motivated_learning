@@ -8,7 +8,9 @@ namespace ml
         ros::NodeHandle nh("~");
         _pains_pub = nh.advertise<commons::Pains>(commons::Topics::pains, 1, true);
         _pains = boost::make_shared<commons::Pains>();
+        _pains->header.frame_id = "base_footprint";
         _prev_image = boost::make_shared<sensor_msgs::Image>();
+        _prev_action = boost::make_shared<commons::Action>();
     }
 
     SensoryProcessing::~SensoryProcessing()
@@ -17,37 +19,29 @@ namespace ml
 
     void SensoryProcessing::ProcessSensoryInputs()
     {
-        // Low battery level pain
-        auto start = commons::now();
-        bool wheels_state_changed = _WheelsStateChanged();
-        ROS_DEBUG_STREAM("_WheelsStateChanged: " << commons::elapsed(commons::now(), start) << " ms");
+        std::future<bool> wheels_state = std::async(std::launch::async, &SensoryProcessing::_WheelsStateChanged, this);
+        std::future<bool> close_to_obstacle = std::async(std::launch::async, &SensoryProcessing::_CloseToObstacle, this);
+        std::future<bool> curiosity = std::async(std::launch::async, &SensoryProcessing::_Curiosity, this);
 
-        if (wheels_state_changed)
+        // Low battery level pain
+        if (wheels_state.get())
         {
             ROS_DEBUG("Wheels state changed. Pain of low battery level increases.");
-            _pains->low_battery_level += 0.01;
+            _pains->low_battery_level += PainIncrements::low_battery_level;
         }
 
         // Mechanical damage pain
-        start = commons::now();
-        bool close_to_obstacle = _CloseToObstacle();
-        ROS_DEBUG_STREAM("_CloseToObstacle: " << commons::elapsed(commons::now(), start) << " ms");
-
-        if (close_to_obstacle)
+        if (close_to_obstacle.get())
         {
             ROS_DEBUG("Robot is too close to some obstacle e.g. wall. Pain of mechanical damage increases.");
-            _pains->mechanical_damage += 0.01;
+            _pains->mechanical_damage += PainIncrements::low_battery_level;
         }
 
         // Curiosity
-        start = commons::now();
-        bool curiosity = _Curiosity();
-        ROS_DEBUG_STREAM("_Curiosity: " << commons::elapsed(commons::now(), start) << " ms");
-
-        if (curiosity)
+        if (curiosity.get())
         {
             ROS_DEBUG("Something with curiosity happened. Do something boiii.");
-            _pains->curiosity += 0.01;
+            _pains->curiosity += PainIncrements::curiosity;
         }
 
         _pains->header.seq++;
@@ -58,24 +52,26 @@ namespace ml
 
     bool SensoryProcessing::_WheelsStateChanged()
     {
-        sensor_msgs::JointState wheels_state = *(ros::topic::waitForMessage<sensor_msgs::JointState>("/joint_states"));
+        commons::Timer timer("SensoryProcessing::_WheelsStateChanged");
 
-        auto left_wheel_joint_name_it = std::find(wheels_state.name.begin(), wheels_state.name.end(), "wheel_left_joint");
-        if (left_wheel_joint_name_it == wheels_state.name.end())
+        sensor_msgs::JointStateConstPtr wheels_state = ros::topic::waitForMessage<sensor_msgs::JointState>("/joint_states");
+
+        auto left_wheel_joint_name_it = std::find(wheels_state->name.begin(), wheels_state->name.end(), "wheel_left_joint");
+        if (left_wheel_joint_name_it == wheels_state->name.end())
         {
-            ROS_ERROR("Missing left wheel joint state. Exiting...");
+            ROS_FATAL("Missing left wheel joint state. Exiting...");
             std::exit(EXIT_FAILURE);
         }
 
-        auto right_wheel_joint_name_it = std::find(wheels_state.name.begin(), wheels_state.name.end(), "wheel_right_joint");
-        if (right_wheel_joint_name_it == wheels_state.name.end())
+        auto right_wheel_joint_name_it = std::find(wheels_state->name.begin(), wheels_state->name.end(), "wheel_right_joint");
+        if (right_wheel_joint_name_it == wheels_state->name.end())
         {
-            ROS_ERROR("Missing right wheel joint state. Exiting...");
+            ROS_FATAL("Missing right wheel joint state. Exiting...");
             std::exit(EXIT_FAILURE);
         }
 
-        float left_wheel_joint_angle = wheels_state.position[left_wheel_joint_name_it - wheels_state.name.begin()];
-        float right_wheel_joint_angle = wheels_state.position[right_wheel_joint_name_it - wheels_state.name.begin()];
+        float left_wheel_joint_angle = wheels_state->position[left_wheel_joint_name_it - wheels_state->name.begin()];
+        float right_wheel_joint_angle = wheels_state->position[right_wheel_joint_name_it - wheels_state->name.begin()];
         // ROS_DEBUG_STREAM("\nl: " << left_wheel_joint_angle << "\nr: " << right_wheel_joint_angle);
 
         bool left_changed = std::fabs(left_wheel_joint_angle - _prev_left_wheel_joint_angle) > 0.01;
@@ -89,13 +85,21 @@ namespace ml
 
     bool SensoryProcessing::_CloseToObstacle()
     {
-        sensor_msgs::LaserScan scan = *(ros::topic::waitForMessage<sensor_msgs::LaserScan>("/scan"));
-        bool too_close = false;
-        for (size_t i = 0; i < scan.ranges.size(); ++i)
+        commons::Timer timer("SensoryProcessing::_CloseToObstacle");
+
+        sensor_msgs::LaserScanConstPtr scan = ros::topic::waitForMessage<sensor_msgs::LaserScan>(commons::Topics::laser_scan, ros::Duration(0.5));
+        if (scan == nullptr)
         {
-            if (scan.ranges[i] != std::numeric_limits<float>::infinity())
+            ROS_FATAL("There is no laser scan data. Exiting...");
+            std::exit(EXIT_FAILURE);
+        }
+
+        bool too_close = false;
+        for (size_t i = 0; i < scan->ranges.size(); ++i)
+        {
+            if (scan->ranges[i] != std::numeric_limits<float>::infinity())
             {
-                if (scan.ranges[i] < RANGE_THRESHOLD)
+                if (scan->ranges[i] < RANGE_THRESHOLD)
                     too_close = true;
                 break;
             }
@@ -105,19 +109,48 @@ namespace ml
 
     bool SensoryProcessing::_Curiosity()
     {
-        sensor_msgs::ImageConstPtr rgb = ros::topic::waitForMessage<sensor_msgs::Image>("/camera/rgb/image_raw");
+        commons::Timer timer("SensoryProcessing::_Curiosity");
 
-        bool img_diff = (rgb->data != _prev_image->data);
+        sensor_msgs::ImageConstPtr rgb = ros::topic::waitForMessage<sensor_msgs::Image>(commons::Topics::rgb, ros::Duration(0.5));
+        if (rgb == nullptr)
+        {
+            ROS_FATAL("There is no video feed. Exiting...");
+            std::exit(EXIT_FAILURE);
+        }
 
-        // auto cv_ptr = cv_bridge::toCvShare(rgb);
-        // cv::Mat t;
-        // cv::cvtColor(cv_ptr->image, t, cv::COLOR_BGR2GRAY);
+        auto current_cv_ptr = cv_bridge::toCvShare(rgb);
+        cv::Mat current_gray;
+        cv::cvtColor(current_cv_ptr->image, current_gray, cv::COLOR_RGB2GRAY);
 
-        // cv::imshow("rgb", cv_ptr->image);
-        // cv::waitKey(1);
+        int ones = 0;
+        if (!_prev_image->data.empty())
+        {
+            auto prev_cv_ptr = cv_bridge::toCvShare(_prev_image);
+            cv::Mat prev_gray;
+            cv::cvtColor(prev_cv_ptr->image, prev_gray, cv::COLOR_RGB2GRAY);
 
+            cv::Mat diff;
+            cv::absdiff(current_gray, prev_gray, diff);
+
+            cv::Mat mask;
+            cv::threshold(diff, mask, 1, 255, cv::THRESH_BINARY);
+
+            ones = cv::countNonZero(mask);
+            // cv::imshow("mask", mask);
+            // cv::waitKey(1);
+        }
         _prev_image = rgb;
-        return img_diff;
+        bool scene_changed = ones < MIN_NON_ZERO;
+
+        // Check action
+        bool action_changed = false;
+        // commons::ActionConstPtr action = ros::topic::waitForMessage<commons::Action>(commons::Topics::action, ros::Duration(0.5));
+        // if (action == nullptr)
+        // {
+        //     ROS_FATAL("No action.");
+        // }
+
+        return scene_changed || action_changed;
     }
 
 }; // namespace ml
