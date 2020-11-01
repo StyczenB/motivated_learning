@@ -20,6 +20,7 @@ namespace commons
     struct Topics
     {
         inline static std::string pains = "/pains";
+        inline static std::string action = "/action";
     };
 
     // struct Frames

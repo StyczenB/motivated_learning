@@ -49,6 +49,7 @@ add_message_files(
   FILES
   Pains.msg
   Resources.msg
+  Action.msg
 )
 
 ## Generate services in the 'srv' folder
