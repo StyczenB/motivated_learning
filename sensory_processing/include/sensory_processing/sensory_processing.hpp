@@ -42,7 +42,8 @@ namespace ml
         ros::Publisher _pains_pub;
         commons::PainsPtr _pains;
 
-        constexpr static float RANGE_THRESHOLD = 0.2;
+        constexpr static float RANGE_THRESHOLD = 0.2f;
+        constexpr static float WHEEL_THRESHOLD = 0.01f; 
         constexpr static int MIN_NON_ZERO = 1000;
 
         struct PainIncrements

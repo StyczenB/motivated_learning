@@ -74,8 +74,8 @@ namespace ml
         float right_wheel_joint_angle = wheels_state->position[right_wheel_joint_name_it - wheels_state->name.begin()];
         // ROS_DEBUG_STREAM("\nl: " << left_wheel_joint_angle << "\nr: " << right_wheel_joint_angle);
 
-        bool left_changed = std::fabs(left_wheel_joint_angle - _prev_left_wheel_joint_angle) > 0.01;
-        bool right_changed = std::fabs(right_wheel_joint_angle - _prev_right_wheel_joint_angle) > 0.01;
+        bool left_changed = std::fabs(left_wheel_joint_angle - _prev_left_wheel_joint_angle) > WHEEL_THRESHOLD;
+        bool right_changed = std::fabs(right_wheel_joint_angle - _prev_right_wheel_joint_angle) > WHEEL_THRESHOLD;
 
         _prev_left_wheel_joint_angle = left_wheel_joint_angle;
         _prev_right_wheel_joint_angle = right_wheel_joint_angle;
@@ -144,11 +144,9 @@ namespace ml
 
         // Check action
         bool action_changed = false;
-        // commons::ActionConstPtr action = ros::topic::waitForMessage<commons::Action>(commons::Topics::action, ros::Duration(0.5));
-        // if (action == nullptr)
-        // {
-        //     ROS_FATAL("No action.");
-        // }
+        commons::ActionConstPtr action = ros::topic::waitForMessage<commons::Action>(commons::Topics::action, ros::Duration(0.1));
+        if (action != nullptr)
+            action_changed = action->action != _prev_action->action;
 
         return scene_changed || action_changed;
     }
