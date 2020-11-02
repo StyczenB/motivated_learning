@@ -6,5 +6,7 @@ catkin build
 
 if [ $? -eq 0 ]; then
     ./kill.sh
-    roslaunch start.launch
+    roslaunch simulation.launch &
+    sleep 3
+    roslaunch algorithms.launch
 fi

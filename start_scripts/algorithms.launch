@@ -1,0 +1,8 @@
+<launch>
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find commons)/config/logger_levels.config"/>
+
+  <!-- Motivated learning -->
+  <node pkg="sensory_processing" type="sensory_processing_node" name="sensory_processing_node" required="true" output="screen" />
+  <node pkg="goal_creation_system" type="goal_creation_system_node" name="goal_creation_system_node" required="true" output="screen" />
+
+</launch>
