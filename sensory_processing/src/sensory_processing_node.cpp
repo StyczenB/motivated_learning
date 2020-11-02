@@ -4,9 +4,10 @@
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "main_node");
+    ros::init(argc, argv, "system_processing_node");
     ros::NodeHandle nh;
-
+    ROS_INFO("Started sensory processing node.");
+    
     ml::SensoryProcessing sensory_processing;
 
     ros::Rate r(100);
