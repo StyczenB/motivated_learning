@@ -139,4 +139,4 @@ dmypy.json
 cmake-build-debug
 
 # Other
-CMakeLists.txt
+/CMakeLists.txt
