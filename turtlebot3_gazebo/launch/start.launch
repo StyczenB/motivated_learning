@@ -1,0 +1,6 @@
+<launch>
+  <env name="GAZEBO_MODEL_PATH" value="$(find turtlebot3_gazebo)/models/:$GAZEBO_MODEL_PATH"/>
+  <node pkg="turtlebot3_gazebo" type="kill.sh" name="kill_apps" output="screen"/>
+  <include file="$(find turtlebot3_gazebo)/launch/simulation.launch"/>
+  <include file="$(find turtlebot3_gazebo)/launch/algorithms.launch"/>
+</launch>

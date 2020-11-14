@@ -134,3 +134,9 @@ dmypy.json
 
 # Except
 !turtlebot3_description/meshes/wheels
+
+# Clion
+cmake-build-debug
+
+# Other
+CMakeLists.txt

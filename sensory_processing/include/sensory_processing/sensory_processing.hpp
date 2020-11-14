@@ -24,8 +24,8 @@ namespace ml
     class SensoryProcessing
     {
     public:
-        SensoryProcessing();
-        ~SensoryProcessing();
+        explicit SensoryProcessing(ros::NodeHandle &nh);
+        ~SensoryProcessing() = default;
 
         void ProcessSensoryInputs();
 
@@ -34,10 +34,11 @@ namespace ml
         float _prev_right_wheel_joint_angle;
         sensor_msgs::ImageConstPtr _prev_image;
         commons::ActionConstPtr _prev_action;
+        ros::NodeHandle _nh;
 
-        bool _WheelsStateChanged();
-        bool _CloseToObstacle();
-        bool _Curiosity();
+        bool WheelsStateChanged();
+        bool CloseToObstacle();
+        bool Curiosity();
 
         ros::Publisher _pains_pub;
         commons::PainsPtr _pains;

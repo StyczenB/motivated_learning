@@ -8,7 +8,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ROS_INFO("Started sensory processing node.");
     
-    ml::SensoryProcessing sensory_processing;
+    ml::SensoryProcessing sensory_processing(nh);
 
     ros::Rate r(100);
     while (ros::ok())
