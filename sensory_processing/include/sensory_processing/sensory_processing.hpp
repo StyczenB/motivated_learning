@@ -39,6 +39,7 @@ namespace ml
         bool WheelsStateChanged();
         bool CloseToObstacle();
         bool Curiosity();
+        bool CheckTopics();
 
         ros::Publisher _pains_pub;
         commons::PainsPtr _pains;

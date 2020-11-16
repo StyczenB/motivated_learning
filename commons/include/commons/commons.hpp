@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <string>
+#include <ros/ros.h>
 
 namespace commons
 {
@@ -41,6 +42,13 @@ namespace commons
         inline static std::string action = "/action";
         inline static std::string rgb = "/camera/rgb/image_raw";
         inline static std::string laser_scan = "/scan";
+        inline static std::string joint_states = "/joint_states";
+        inline static std::string model_states = "/gazebo/model_states";
+    };
+
+    struct Models
+    {
+        inline static std::string turtlebot3 = "turtlebot3_waffle";
     };
 
     // struct Frames

@@ -2,7 +2,7 @@
 #include <ros/ros.h>
 #include "sensory_processing/sensory_processing.hpp"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     ros::init(argc, argv, "system_processing_node");
     ros::NodeHandle nh;
