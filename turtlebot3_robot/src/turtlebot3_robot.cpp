@@ -2,7 +2,8 @@
 
 namespace turtlebot3
 {
-    Turtlebot3::Turtlebot3()
+    Turtlebot3::Turtlebot3(ros::NodeHandle &nh)
+        : _nh(nh)
     {
     }
 
@@ -14,11 +15,18 @@ namespace turtlebot3
     {
         ROS_DEBUG("Getting robots position in the world.");
 
-        gazebo_msgs::ModelStatesPtr model_states = ros::topic::waitForMessage<gazebo_msgs::ModelStates>(commons::Topics::model_states);
-        if (model_states == nullptr)
-        {
-            std::exit(EXIT_FAILURE);
-        }
+        // ros::ServiceClient model_state_client = _nh.serviceClient<gazebo_msgs::GetModelState>(commons::GazeboServices::model_state);
+        // gazebo_msgs::GetModelState srv;
+        // srv.request.model_name = commons::Models::turtlebot3;
+        // if (!model_state_client.call(srv))
+        // {  
+        //     ROS_ERROR("Could not call gazebo get model state.");
+        // }
+
+        // float x_pos = srv.response.pose.position.x;
+        // float y_pos = srv.response.pose.position.y;
+
+        // float yaw = srv.response.pose.orientation.
     }
 
 } // namespace turtlebot3

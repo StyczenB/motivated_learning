@@ -7,7 +7,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ROS_INFO("Started turtlebot3 node.");
 
-    turtlebot3::Turtlebot3 robot;
+    turtlebot3::Turtlebot3 robot(nh);
 
     ros::Rate r(100);
     while (ros::ok())

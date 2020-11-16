@@ -51,6 +51,11 @@ namespace commons
         inline static std::string turtlebot3 = "turtlebot3_waffle";
     };
 
+    struct GazeboServices
+    {
+        inline static std::string model_state = "/gazebo/set_model_state";  
+    };
+
     // struct Frames
     // {
     //     inline static std::string robot = "robot";
