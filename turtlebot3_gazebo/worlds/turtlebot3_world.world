@@ -1,5 +1,20 @@
 <sdf version='1.4'>
   <world name='default'>
+    <!-- Scene settings -->
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- Bird view -->
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>0.8 0.0 12.0 0 1.5708 0</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+
     <!-- A global light source -->
     <include>
       <uri>model://sun</uri>
@@ -10,6 +25,7 @@
       <uri>model://ground_plane</uri>
     </include>
 
+    <!-- Physics settings -->
     <physics type="ode">
       <real_time_update_rate>1000.0</real_time_update_rate>
       <max_step_size>0.001</max_step_size>
@@ -32,9 +48,9 @@
     </physics>
 
     <!-- Load world -->
-    <include>
-      <uri>model://turtlebot3_square</uri>
-    </include>
+    <!-- <include> -->
+      <!-- <uri>model://turtlebot3_square</uri> -->
+    <!-- </include> -->
 
     <!-- Load charger place. -->
     <include>
@@ -42,17 +58,6 @@
       <uri>model://charger</uri>
     </include>
 
-    <scene>
-      <ambient>0.4 0.4 0.4 1</ambient>
-      <background>0.7 0.7 0.7 1</background>
-      <shadows>true</shadows>
-    </scene>
 
-    <gui fullscreen='0'>
-      <camera name='user_camera'>
-        <pose>0.8 0.0 12.0 0 1.5708 0</pose>
-        <view_controller>orbit</view_controller>
-      </camera>
-    </gui>
   </world>
 </sdf>

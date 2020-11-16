@@ -4,7 +4,7 @@ project(sensory_processing)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-#set(CMAKE_BUILD_TYPE RELEASE)
+set(CMAKE_BUILD_TYPE debug)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
