@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   commons
   sensor_msgs
   cv_bridge
+  robot_msgs
 )
 
 find_package(PCL REQUIRED)

@@ -52,6 +52,7 @@
   <depend>roscpp</depend>
   <depend>gazebo_ros</depend>
   <depend>commons</depend>
+  <depend>robot_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

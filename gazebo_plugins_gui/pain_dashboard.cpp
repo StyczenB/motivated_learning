@@ -74,7 +74,7 @@ namespace gazebo
         ROS_DEBUG("Button clicked");
     }
 
-    void PainDashboard::PainMsgCallback(const commons::Pains::ConstPtr &msg)
+    void PainDashboard::PainMsgCallback(const robot_msgs::Pains::ConstPtr &msg)
     {
         ROS_DEBUG("Received message with pain values.");
         std::stringstream ss;

@@ -1,0 +1,8 @@
+#goal definition
+geometry_msgs/Point goal
+---
+#result definition
+bool done
+---
+#feedback
+float32 dist_to_goal

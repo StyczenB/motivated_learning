@@ -17,7 +17,7 @@
 
 // ___Other packages___
 #include "commons/commons.hpp"
-#include "commons/Pains.h"
+#include "robot_msgs/Pains.h"
 
 namespace gazebo
 {
@@ -39,7 +39,7 @@ namespace gazebo
     private:
         std::shared_ptr<ros::NodeHandle> nh_;
         ros::Subscriber pain_sub_;
-        void PainMsgCallback(const commons::Pains::ConstPtr &msg);
+        void PainMsgCallback(const robot_msgs::Pains::ConstPtr &msg);
 
     };
 
