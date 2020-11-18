@@ -5,11 +5,11 @@ namespace ml
     SensoryProcessing::SensoryProcessing(ros::NodeHandle &nh)
         : _nh(nh), _prev_left_wheel_joint_angle(0), _prev_right_wheel_joint_angle(0)
     {
-        _pains_pub = _nh.advertise<commons::Pains>(commons::Topics::pains, 1, true);
-        _pains = boost::make_shared<commons::Pains>();
+        _pains_pub = _nh.advertise<robot_msgs::Pains>(commons::Topics::pains, 1, true);
+        _pains = boost::make_shared<robot_msgs::Pains>();
         _pains->header.frame_id = "base_footprint";
         _prev_image = boost::make_shared<sensor_msgs::Image>();
-        _prev_action = boost::make_shared<commons::Action>();
+        _prev_action = boost::make_shared<robot_msgs::Action>();
         CheckTopics();
     }
 
@@ -144,8 +144,8 @@ namespace ml
 
         // Check action
         bool action_changed = false;
-        commons::ActionConstPtr action = ros::topic::waitForMessage<commons::Action>(commons::Topics::action,
-                                                                                     ros::Duration(0.1));
+        robot_msgs::ActionConstPtr action = ros::topic::waitForMessage<robot_msgs::Action>(commons::Topics::action,
+                                                                                           ros::Duration(0.1));
         if (action != nullptr)
             action_changed = action->action != _prev_action->action;
 
@@ -179,6 +179,7 @@ namespace ml
             }
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
+        return true;
     }
 
 }; // namespace ml

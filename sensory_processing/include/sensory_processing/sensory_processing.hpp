@@ -15,8 +15,8 @@
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include "commons/Pains.h"
-#include "commons/Action.h"
+#include "robot_msgs/Pains.h"
+#include "robot_msgs/Action.h"
 #include "commons/commons.hpp"
 
 namespace ml
@@ -33,7 +33,7 @@ namespace ml
         float _prev_left_wheel_joint_angle;
         float _prev_right_wheel_joint_angle;
         sensor_msgs::ImageConstPtr _prev_image;
-        commons::ActionConstPtr _prev_action;
+        robot_msgs::ActionConstPtr _prev_action;
         ros::NodeHandle _nh;
 
         bool WheelsStateChanged();
@@ -42,7 +42,7 @@ namespace ml
         bool CheckTopics();
 
         ros::Publisher _pains_pub;
-        commons::PainsPtr _pains;
+        robot_msgs::PainsPtr _pains;
 
         constexpr static float RANGE_THRESHOLD = 0.2f;
         constexpr static float WHEEL_THRESHOLD = 0.01f; 
