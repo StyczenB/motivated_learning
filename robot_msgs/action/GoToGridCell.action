@@ -1,5 +1,5 @@
 #goal definition
-geometry_msgs/Point goal
+geometry_msgs/Point grid_coordinates
 ---
 #result definition
 bool done

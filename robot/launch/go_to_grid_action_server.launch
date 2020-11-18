@@ -1,0 +1,4 @@
+<launch>
+  <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find commons)/config/python_logger.config"/>
+  <node pkg="robot" type="go_to_grid_cell_server.py" name="go_to_grid_cell_server" output="screen"/>
+</launch>
