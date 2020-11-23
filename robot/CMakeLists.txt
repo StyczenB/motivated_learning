@@ -143,7 +143,7 @@ target_link_libraries(turtlebot3_robot_node
 
 catkin_install_python(PROGRAMS
   scripts/main.py
-  scripts/go_to_grid_cell_server.py
+  scripts/go_to_grid_cell_service.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
