@@ -157,6 +157,7 @@ include_directories(
 
 catkin_install_python(PROGRAMS
   scripts/grid_cell.py
+  scripts/grid_map.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
