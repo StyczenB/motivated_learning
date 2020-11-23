@@ -50,6 +50,8 @@ add_message_files(
   Pains.msg
   Resources.msg
   Action.msg
+  Field.msg
+  Map.msg
 )
 
 add_service_files(

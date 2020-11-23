@@ -9,6 +9,21 @@ import tf
 import math
 import copy
 
+class Robot:
+    IDLE = 0
+    MOVING = 1
+    CHARGING = 2
+
+    def __init__(self):
+        self.battery_charge = 100
+        self.idle_discharge_coeff = 0.99
+        self.moving_discharge_coeff = 1.0
+        
+
+    def step(self):
+        self.battery_charge *= 0.99
+        
+
 
 def get_robot_pose():
     odom = rospy.wait_for_message('/odom', Odometry)
