@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES turtlebot3_robot
-#  CATKIN_DEPENDS roscpp
+ CATKIN_DEPENDS robot_msgs
 #  DEPENDS system_lib
 )
 

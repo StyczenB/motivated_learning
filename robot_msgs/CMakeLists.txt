@@ -10,6 +10,7 @@ project(robot_msgs)
 find_package(catkin REQUIRED COMPONENTS
     geometry_msgs
     message_generation
+    std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -46,18 +47,13 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 add_message_files(
-  FILES
-  Pains.msg
-  Resources.msg
-  Action.msg
-  Field.msg
-  Map.msg
+  DIRECTORY
+  msg
 )
 
 add_service_files(
-  FILES
-  SetGridGoal.srv
-  CancelGridGoal.srv
+  DIRECTORY
+  srv
 )
 
 # add_action_files(
@@ -102,7 +98,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES turtlebot3_msgs
-  CATKIN_DEPENDS message_runtime
+  CATKIN_DEPENDS message_runtime std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 

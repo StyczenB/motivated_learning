@@ -1,10 +1,20 @@
 <launch>
+  <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find commons)/config/python_logger.config"/>
   <env name="GAZEBO_MODEL_PATH" value="$(find turtlebot3_gazebo)/models/:$GAZEBO_MODEL_PATH"/>
+  
+  <param name="model_name" value="turtlebot3_waffle" />
+
   <!-- <node pkg="turtlebot3_gazebo" type="kill.sh" name="kill_apps" output="screen"/> -->
   <include file="$(find turtlebot3_gazebo)/launch/simulation.launch"/>
   <include file="$(find turtlebot3_navigation)/launch/move_base.launch"/>
   <!-- <include file="$(find turtlebot3_gazebo)/launch/algorithms.launch"/> -->
 
-  <node pkg="rviz" type="rviz" name="rviz" required="true"
-        args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>
+  <group ns="ml">
+    <node pkg="simulation_map" type="create_map.py" name="create_map" required="true" output="screen"/>
+    <node pkg="robot" type="update_agent_grid_coord.py" name="update_agent_grid_coord" required="true" output="screen"/>
+    <node pkg="robot" type="go_to_grid_cell_service.py" name="go_to_grid_cell_service" required="true" output="screen"/>
+    <!-- <node pkg="robot" type="agent.py" name="agent" required="true" output="screen"/> -->
+  </group>
+
+  <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/> -->
 </launch>

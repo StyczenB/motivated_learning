@@ -81,7 +81,7 @@
     </plugin>
   </gazebo>
 
-  <gazebo>
+  <!-- <gazebo>
     <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
       <bodyName>imu_link</bodyName>
@@ -108,7 +108,7 @@
         </noise>
       </imu>
     </plugin>
-  </gazebo>
+  </gazebo> -->
 
   <gazebo reference="base_scan">
     <material>Gazebo/FlatBlack</material>
@@ -143,7 +143,7 @@
     </sensor>
   </gazebo>
 
-  <gazebo reference="camera_rgb_frame">
+  <!-- <gazebo reference="camera_rgb_frame">
     <sensor type="depth" name="realsense_R200">
       <always_on>true</always_on>
       <visualize>$(arg camera_visual)</visualize>
@@ -203,6 +203,6 @@
           </clip>
       </camera>
     </sensor>
-  </gazebo>
+  </gazebo> -->
 
 </robot>
