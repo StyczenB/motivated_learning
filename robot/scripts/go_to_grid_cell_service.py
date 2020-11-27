@@ -75,7 +75,7 @@ class GoToGridCellService:
 if __name__ == '__main__':
     try:
         rospy.init_node('go_to_grid_cell_service', log_level=rospy.INFO)
-        go_to_grid_cell = GoToGridCellService(continuous_movement=True)
+        go_to_grid_cell = GoToGridCellService(continuous_movement=False)
         rospy.loginfo('Go to grid service running...')
         rospy.spin()
     except rospy.ROSInterruptException:

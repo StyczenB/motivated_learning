@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>simulation_map</name>
+  <name>environment</name>
   <version>0.0.0</version>
-  <description>The simulation_map package</description>
+  <description>The environment package</description>
   <maintainer email="bartek@todo.todo">bartek</maintainer>
   <license>TODO</license>
   <!-- <url type="website">http://wiki.ros.org/simulation_map</url> -->

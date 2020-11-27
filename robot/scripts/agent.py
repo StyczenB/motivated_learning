@@ -10,12 +10,7 @@ import tf
 import math
 import copy
 import time
-
-
-# class State:
-#     IDLE = 0
-#     MOVING = 1
-#     CHARGING = 2
+from environment.chargers_manager import ChargersManager
 
 
 class Agent:
@@ -24,90 +19,93 @@ class Agent:
     MOVING_DISCHARGE = 0.995
 
     def __init__(self):
-        self.charging_coeff = 0.001
-        self.idle_discharge_coeff = 0.9995
-        self.moving_discharge_coeff = Agent.MOVING_DISCHARGE
+        # self.charging_coeff = 0.001
+        self._idle_discharge_coeff = 0.9995
+        self._moving_discharge_coeff = Agent.MOVING_DISCHARGE
         # self.wheel_lubrication_moving_discharge_coeff = 0.95
-        self.wheel_lubrication_effect_start_time = time.time()
+        self._wheel_lubrication_effect_start_time = time.time()
 
-        self.state = State.IDLE
-        self.battery_level = Agent.BATTERY_MAX
-        self.prev_x, self.prev_y, self.prev_yaw = self.get_robot_pose()
-        self.state_pub = rospy.Publisher('agent_state', State, queue_size=1)
+        self._state = State.IDLE
+        self._battery_level = Agent.BATTERY_MAX
+        self._prev_x, self._prev_y, self._prev_yaw = self.get_robot_pose()
+        self._state_pub = rospy.Publisher('agent_state', State, queue_size=1)
 
         rospy.loginfo('Waiting for global_world_map message...')
-        self.global_world_map = rospy.wait_for_message('global_world_map', Map)
+        self._global_world_map = rospy.wait_for_message('global_world_map', Map)
         rospy.loginfo('...obtain global world map')
-        # self.map = Map()
+        self._chargers_manager = ChargersManager()
 
     def step(self):
-        moving = self.is_moving()
-        self.state = State.MOVING if moving else State.IDLE
-        
-        if time.time() - self.wheel_lubrication_effect_start_time > 10:
-            # effect of wheel lubrication has just wore off, using default moving discharge value
-            self.moving_discharge_coeff = Agent.MOVING_DISCHARGE
+        if self._battery_level < 0.1:
+            rospy.logwarn('There is less then 0.1 of agent\'s battery...')
 
+        moving = self.is_moving()
+        self._state = State.MOVING if moving else State.IDLE
+        
+        if time.time() - self._wheel_lubrication_effect_start_time > 10:
+            # effect of wheel lubrication has just wore off, using default moving discharge value
+            self._moving_discharge_coeff = Agent.MOVING_DISCHARGE
+
+        curr_field = self.get_current_field()
         # Agent stopped on this field, not only going through it
         if not moving:
-            curr_field = self.get_current_field()
             if curr_field.type == Field.CHARGER:
-                self.state = State.CHARGING
+                self._state = State.CHARGING
             elif curr_field.type == Field.WHEEL_LUBRICATION:
-                self.moving_discharge_coeff = 1.0
-                self.wheel_lubrication_effect_start_time = time.time()  # effect is valid for 10 seconds
-                rospy.loginfo('Stepped on WHEEL_LUBRICATION field. Agent for 10 seconds.')
+                self._moving_discharge_coeff = 1.0
+                self._wheel_lubrication_effect_start_time = time.time()  # effect is valid for 10 seconds
+                rospy.loginfo('Stepped on WHEEL_LUBRICATION field. Agent for 10 seconds will not use battery charge.')
 
-        if self.state == State.IDLE:
+        if self._state == State.IDLE:
             rospy.loginfo('State.IDLE')
-            self.battery_level *= self.idle_discharge_coeff
-        elif self.state == State.MOVING:
+            self._battery_level *= self._idle_discharge_coeff
+        elif self._state == State.MOVING:
             rospy.loginfo('State.MOVING')
-            self.battery_level *= self.moving_discharge_coeff
-        elif self.state == State.CHARGING:
+            self._battery_level *= self._moving_discharge_coeff
+        elif self._state == State.CHARGING:
             rospy.loginfo('State.CHARGING')
-            missing_charge_to_max = Agent.BATTERY_MAX - self.battery_level
-            self.battery_level += self.charging_coeff * missing_charge_to_max
+            charger = self._chargers_manager.get_charger(x=curr_field.coords.x, y=curr_field.coords.y)
+            if charger:
+                energy = charger.draw_energy()
+                self._battery_level += energy
+            else:
+                rospy.logwarn(f'Problem getting charger from coordinates: x={curr_field.coords.x}, y={curr_field.coords.y}')
         else:
             rospy.logerr('Invalid agent state.')
             rospy.signal_shutdown('Invalid agent state. Exiting...')
 
-        # clamp battery levele
-        min(max(Agent.BATTERY_MIN, self.battery_level), Agent.BATTERY_MAX)
+        # clamp battery level
+        self._battery_level = min(max(Agent.BATTERY_MIN, self._battery_level), Agent.BATTERY_MAX)
 
         agent_state = State()
         agent_state.header.stamp = rospy.Time().now()
-        agent_state.battery_level = self.battery_level
-        agent_state.state = self.state
+        agent_state.battery_level = self._battery_level
+        agent_state.state = self._state
         agent_state.x, agent_state.y, agent_state.yaw = self.get_robot_pose() 
-        self.state_pub.publish(agent_state)
-
-        self.prev_x, self.prev_y, self.prev_yaw = agent_state.x, agent_state.y, agent_state.yaw
-
+        self._state_pub.publish(agent_state)
+        self._prev_x, self._prev_y, self._prev_yaw = agent_state.x, agent_state.y, agent_state.yaw
+        self._chargers_manager.update()
 
     def get_field_from_global_map(self, x: int, y: int):
-        for field in self.global_world_map.cells:
-            if x == field.x and y == field.y:
+        for field in self._global_world_map.cells:
+            if x == field.coords.x and y == field.coords.y:
                 return field
         rospy.logwarn(f'Could not find valid field with coordinates: x: {x}, y: {y}')
         return None
 
-
-    def is_moving(self):
+    def is_moving(self) -> bool:
         x_pos, y_pos, yaw = self.get_robot_pose()
-        x_changed = not math.isclose(x_pos, self.prev_x, rel_tol=1e-3) 
-        y_changed = not math.isclose(y_pos, self.prev_y, rel_tol=1e-3) 
-        yaw_changed = not math.isclose(yaw, self.prev_yaw, rel_tol=1e-3) 
+        x_changed = not math.isclose(x_pos, self._prev_x, rel_tol=1e-3) 
+        y_changed = not math.isclose(y_pos, self._prev_y, rel_tol=1e-3) 
+        yaw_changed = not math.isclose(yaw, self._prev_yaw, rel_tol=1e-1) 
         return x_changed or y_changed or yaw_changed
 
-
-    def get_robot_pose(self):
+    def get_robot_pose(self) -> (float, float, float):
         odom = rospy.wait_for_message('/odom', Odometry)
         pos = odom.pose.pose.position.x, odom.pose.pose.position.y
         quat = odom.pose.pose.orientation
         _, _, yaw = tf.transformations.euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])
         return pos[0], pos[1], yaw
-
     
     def get_current_field(self):
         curr_grid_coord = rospy.wait_for_message('grid_coord', GridCoord)
@@ -121,10 +119,9 @@ if __name__ == '__main__':
         rospy.init_node('robot', anonymous=True)
         agent = Agent()
         rospy.loginfo('Started node with agent state updaters.')
-        rate = rospy.Rate(2)
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
-            agent.step()
-
+            # agent.step()
             rate.sleep()
     except rospy.ROSInterruptException:
         pass

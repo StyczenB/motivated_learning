@@ -10,10 +10,10 @@
   <!-- <include file="$(find turtlebot3_gazebo)/launch/algorithms.launch"/> -->
 
   <group ns="ml">
-    <node pkg="simulation_map" type="create_map.py" name="create_map" required="true" output="screen"/>
+    <node pkg="environment" type="create_map.py" name="create_map" required="true" output="screen"/>
     <node pkg="robot" type="update_agent_grid_coord.py" name="update_agent_grid_coord" required="true" output="screen"/>
     <node pkg="robot" type="go_to_grid_cell_service.py" name="go_to_grid_cell_service" required="true" output="screen"/>
-    <!-- <node pkg="robot" type="agent.py" name="agent" required="true" output="screen"/> -->
+    <node pkg="robot" type="agent.py" name="agent" required="true" output="screen"/>
   </group>
 
   <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/> -->
