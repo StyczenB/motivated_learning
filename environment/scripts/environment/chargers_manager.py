@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 import rospy
 from typing import List
-from robot_msgs.msg import Map, Field, GridCoord, ChargerStateMsg, ChargersMsg
+from robot_msgs.msg import MapMsg, FieldMsg, ChargerStateMsg, ChargersMsg
+from environment.global_map_manager import Field
+from geometry_msgs.msg import Point
 
 
 class Charger:
     CHARGER_MAX_VAL = 1.0
     CHARGER_MIN_VAL = 0.0
-    CHARGING_INCREMENT = 0.1
+    CHARGING_INCREMENT = 0.001
 
     def __init__(self, x: int, y: int):
         self._x: int = x
@@ -25,7 +27,7 @@ class Charger:
     def draw_energy(self) -> float:
         if self._charger_value < 0.1:
             return 0
-        energy = 0.1
+        energy = self._charger_value * 0.005
         self._charger_value -= energy
         return energy
 
@@ -37,7 +39,7 @@ class Charger:
         return f'x: {self._x}, y: {self._y} -> charger value: {self._charger_value}\n'
 
     def get_charger_state_msg(self) -> ChargerStateMsg:
-        return ChargerStateMsg(x=self._x, y=self._y, charger_value=self._charger_value)
+        return ChargerStateMsg(coords=Point(x=self._x, y=self._y), charger_value=self._charger_value)
 
 
 class ChargersManager:
@@ -48,9 +50,9 @@ class ChargersManager:
 
     def init_chargers(self):
         rospy.loginfo('Waiting for \'global_world_map\' topic...')
-        global_map = rospy.wait_for_message('global_world_map', Map)
+        global_map = rospy.wait_for_message('global_world_map', MapMsg)
         rospy.loginfo('...topic \'global_world_map\' available')
-        for field in global_map.cells:
+        for field in global_map.fields:
             if field.type == Field.CHARGER:
                 charger = Charger(x=field.coords.x, y=field.coords.y)
                 self._chargers.append(charger)

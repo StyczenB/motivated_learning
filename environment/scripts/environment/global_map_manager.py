@@ -3,7 +3,7 @@ import rospy
 import rospkg
 from robot_msgs.msg import FieldMsg, MapMsg
 from gazebo_msgs.srv import SpawnModel, SpawnModelRequest
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Point
 import random
 import os
 import time
@@ -42,7 +42,7 @@ class Field:
         self._nr_visits += increment_val
 
     def get_field_msg(self) -> FieldMsg:
-        return FieldMsg(x=self._x, y=self._y, nr_visits=self._nr_visits, type=self._type)
+        return FieldMsg(coords=Point(x=self._x, y=self._y), nr_visits=self._nr_visits, type=self._field_type)
 
 
 class GlobalMapManager:
@@ -57,6 +57,10 @@ class GlobalMapManager:
         self._world_map: List[Field] = []
         self._world_map_pub = rospy.Publisher('global_world_map', MapMsg, latch=True, queue_size=1)
         
+    @property
+    def world_map(self) -> List[Field]:
+        return self._world_map
+
     @staticmethod
     def get_sdf(model_name: str):
         pkg_path = rospkg.RosPack().get_path('turtlebot3_gazebo')
@@ -76,25 +80,25 @@ class GlobalMapManager:
         width = 11
         height = 11
         nr_fields = width * height
-        normal_prob = 1 - self.chargers_prob - self.wheels_lubrication_prob
+        normal_prob = 1 - self._chargers_prob - self._wheels_lubrication_prob
         pkg_path = rospkg.RosPack().get_path('environment')
         try:
-            coord = np.loadtxt(os.path.join(pkg_path, 'data', 'map_fields.txt'), dtype=int)
+            map_fields = np.loadtxt(os.path.join(pkg_path, 'data', 'map_fields.txt'), dtype=int)
         except Exception as e:
             rospy.loginfo('File with map fields types not available. Generating randomly...')
-            coord = np.random.choice([0, 1, 2], (height, width), p=[normal_prob, self.chargers_prob, self.wheels_lubrication_prob])
-            np.savetxt(os.path.join(pkg_path, 'data', 'map_fields.txt'), coord, fmt='%d')
+            map_fields = np.random.choice([0, 1, 2], (height, width), p=[normal_prob, self._chargers_prob, self._wheels_lubrication_prob])
+            np.savetxt(os.path.join(pkg_path, 'data', 'map_fields.txt'), map_fields, fmt='%d')
         cnt = 0
-        for i in range(coord.shape[0]):
-            for j in range(coord.shape[1]):
-                field_type = coord[i, j]
-                if i == coord.shape[0] // 2 and j == coord.shape[1] // 2: 
+        for i in range(map_fields.shape[0]):
+            for j in range(map_fields.shape[1]):
+                field_type = map_fields[i, j]
+                if i == map_fields.shape[0] // 2 and j == map_fields.shape[1] // 2: 
                     field_type = Field.NORMAL
-                field = Field(x=int(i - coord.shape[0] // 2), y=int(j - coord.shape[1] // 2), field_type=field_type)
+                field = Field(x=int(i - map_fields.shape[0] // 2), y=int(j - map_fields.shape[1] // 2), field_type=field_type)
                 self._world_map.append(field)
 
                 # Spawning in gazebo part
-                if field.type == Field.NORMAL:
+                if field.field_type == Field.NORMAL:
                     # Spawn model only for non normal fields (to save time)
                     continue
 
@@ -102,8 +106,8 @@ class GlobalMapManager:
                 pose.position.x = field.x + 0.5
                 pose.position.y = field.y + 0.5
                 req = SpawnModelRequest()
-                req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.type]}{cnt}'
-                req.model_xml = models_sdf[field.type]
+                req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.field_type]}{cnt}'
+                req.model_xml = models_sdf[field.field_type]
                 req.initial_pose = pose
                 req.reference_frame = 'world'
                 spawn_sdf_model.call(req)
@@ -115,6 +119,7 @@ class GlobalMapManager:
         global_map_msg.header.stamp = rospy.Time().now()
         for field in self._world_map:
             global_map_msg.fields.append(field.get_field_msg())
+        self._world_map_pub.publish(global_map_msg)
 
 
 if __name__ == '__main__':
@@ -131,4 +136,3 @@ if __name__ == '__main__':
         rospy.spin()
     except Exception as e:
         rospy.logerr(f'Error while creating map with message: {e}')
-    

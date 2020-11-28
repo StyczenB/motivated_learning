@@ -5,12 +5,19 @@ from gazebo_msgs.srv import GetModelState, SetModelState
 from gazebo_msgs.msg import ModelState
 from geometry_msgs.msg import Twist, Point
 from nav_msgs.msg import Odometry
-from robot_msgs.msg import State, Map, Field, GridCoord
+from robot_msgs.msg import StateMsg, MapMsg, FieldMsg
 import tf
 import math
 import copy
 import time
 from environment.chargers_manager import ChargersManager
+from environment.global_map_manager import GlobalMapManager, Field
+
+
+class State:
+    IDLE = 0
+    MOVING = 1
+    CHARGING = 2
 
 
 class Agent:
@@ -28,10 +35,10 @@ class Agent:
         self._state = State.IDLE
         self._battery_level = Agent.BATTERY_MAX
         self._prev_x, self._prev_y, self._prev_yaw = self.get_robot_pose()
-        self._state_pub = rospy.Publisher('agent_state', State, queue_size=1)
+        self._state_pub = rospy.Publisher('agent_state', StateMsg, queue_size=1)
 
         rospy.loginfo('Waiting for global_world_map message...')
-        self._global_world_map = rospy.wait_for_message('global_world_map', Map)
+        self._global_world_map = rospy.wait_for_message('global_world_map', MapMsg)
         rospy.loginfo('...obtain global world map')
         self._chargers_manager = ChargersManager()
 
@@ -64,12 +71,15 @@ class Agent:
             self._battery_level *= self._moving_discharge_coeff
         elif self._state == State.CHARGING:
             rospy.loginfo('State.CHARGING')
-            charger = self._chargers_manager.get_charger(x=curr_field.coords.x, y=curr_field.coords.y)
-            if charger:
-                energy = charger.draw_energy()
-                self._battery_level += energy
+            if self._battery_level < Agent.BATTERY_MAX:
+                charger = self._chargers_manager.get_charger(x=curr_field.coords.x, y=curr_field.coords.y)
+                if charger:
+                    energy = charger.draw_energy()
+                    self._battery_level += energy
+                else:
+                    rospy.logwarn(f'Problem getting charger from coordinates: x={curr_field.coords.x}, y={curr_field.coords.y}')
             else:
-                rospy.logwarn(f'Problem getting charger from coordinates: x={curr_field.coords.x}, y={curr_field.coords.y}')
+                rospy.loginfo('Agent\'s battery is full')
         else:
             rospy.logerr('Invalid agent state.')
             rospy.signal_shutdown('Invalid agent state. Exiting...')
@@ -77,17 +87,12 @@ class Agent:
         # clamp battery level
         self._battery_level = min(max(Agent.BATTERY_MIN, self._battery_level), Agent.BATTERY_MAX)
 
-        agent_state = State()
-        agent_state.header.stamp = rospy.Time().now()
-        agent_state.battery_level = self._battery_level
-        agent_state.state = self._state
-        agent_state.x, agent_state.y, agent_state.yaw = self.get_robot_pose() 
-        self._state_pub.publish(agent_state)
-        self._prev_x, self._prev_y, self._prev_yaw = agent_state.x, agent_state.y, agent_state.yaw
+        agent_state = self.publish()
+        self._prev_x, self._prev_y, self._prev_yaw = agent_state.coords.x, agent_state.coords.y, agent_state.yaw
         self._chargers_manager.update()
 
     def get_field_from_global_map(self, x: int, y: int):
-        for field in self._global_world_map.cells:
+        for field in self._global_world_map.fields:
             if x == field.coords.x and y == field.coords.y:
                 return field
         rospy.logwarn(f'Could not find valid field with coordinates: x: {x}, y: {y}')
@@ -108,9 +113,18 @@ class Agent:
         return pos[0], pos[1], yaw
     
     def get_current_field(self):
-        curr_grid_coord = rospy.wait_for_message('grid_coord', GridCoord)
+        curr_grid_coord = rospy.wait_for_message('grid_coord', Point)
         curr_field = self.get_field_from_global_map(curr_grid_coord.x, curr_grid_coord.y)
         return curr_field
+
+    def publish(self) -> StateMsg:
+        agent_state = StateMsg()
+        agent_state.header.stamp = rospy.Time().now()
+        agent_state.battery_level = self._battery_level
+        agent_state.state = self._state
+        agent_state.coords.x, agent_state.coords.y, agent_state.yaw = self.get_robot_pose() 
+        self._state_pub.publish(agent_state)
+        return agent_state
 
 
 if __name__ == '__main__':
@@ -121,7 +135,7 @@ if __name__ == '__main__':
         rospy.loginfo('Started node with agent state updaters.')
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
-            # agent.step()
+            agent.step()
             rate.sleep()
     except rospy.ROSInterruptException:
         pass
