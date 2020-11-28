@@ -39,7 +39,7 @@ class GoToGridCellService:
     def execute_cb(self, grid_goal: SetGridGoalRequest):
         rospy.loginfo(f'Executing, creating go to grid cell:\n{grid_goal}')
         if self.continuous_movement:
-            goal_world = GoToGridCellService.get_world_from_grid_coordinate(grid_goal.goal)
+            goal_world = grid_goal.goal
 
             pos, _ = self.get_current_pose_quaternion()
             inc_x = goal_world.x - pos.x
@@ -56,16 +56,10 @@ class GoToGridCellService:
         else:
             model_state = ModelState()
             model_state.model_name = self.model_name       
-            model_state.pose.position.x = grid_goal.goal.x + 0.5
-            model_state.pose.position.y = grid_goal.goal.y + 0.5
+            model_state.pose.position.x = grid_goal.goal.x
+            model_state.pose.position.y = grid_goal.goal.y
             self.set_model_state(model_state)
         return SetGridGoalResponse()
-
-    @staticmethod
-    def get_world_from_grid_coordinate(grid: Point):
-        x_pos = grid.x + 0.5
-        y_pos = grid.y + 0.5
-        return Point(x=x_pos, y=y_pos, z=0)
 
     def get_current_pose_quaternion(self):
         res = self.get_model_state(self.model_name, '')

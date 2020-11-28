@@ -16,8 +16,9 @@ class UpdateAgentGridCoord:
 
     def odom_cb(self, data: Odometry):
         grid_coord = Point()
-        grid_coord.x = math.floor(data.pose.pose.position.x) 
-        grid_coord.y = math.floor(data.pose.pose.position.y) 
+        x, y = data.pose.pose.position.x, data.pose.pose.position.y
+        grid_coord.x = math.floor(x + 0.5) 
+        grid_coord.y = math.floor(y + 0.5) 
         self.grid_cell_coord_pub.publish(grid_coord)
 
 

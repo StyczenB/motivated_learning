@@ -1,11 +1,14 @@
-#!/usr/bin/env python3
 import rospy
 import rospkg
 from robot_msgs.msg import FieldMsg, MapMsg
-from gazebo_msgs.srv import SpawnModel, SpawnModelRequest
-from geometry_msgs.msg import Pose, Point
+from gazebo_msgs.srv import SpawnModel, SpawnModelRequest, DeleteModel, DeleteModelRequest
+from gazebo_msgs.msg import ModelStates
+from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
+from std_msgs.msg import ColorRGBA
+from visualization_msgs.msg import MarkerArray, Marker
 import random
 import os
+import sys
 import time
 import numpy as np
 from typing import List
@@ -56,6 +59,7 @@ class GlobalMapManager:
         self._wheels_lubrication_prob = wheels_lubrication_prob
         self._world_map: List[Field] = []
         self._world_map_pub = rospy.Publisher('global_world_map', MapMsg, latch=True, queue_size=1)
+        self._visualization_markers_pub = rospy.Publisher('/visualization_marker_array', MarkerArray, latch=True, queue_size=1)
         
     @property
     def world_map(self) -> List[Field]:
@@ -69,13 +73,24 @@ class GlobalMapManager:
             model_sdf = f.read()
         return model_sdf
 
+    def remove_models(self):
+        rospy.loginfo('Removing old fields...')
+        model_states = rospy.wait_for_message('/gazebo/model_states', ModelStates)
+        delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
+        model_names = model_states.name
+        for name in model_names:
+            if 'charger' in name or 'wheels_lubrication' in name:
+                delete_model(name)
+
     def create_map(self):
+        self.remove_models()
+
         rospy.loginfo('Waiting for /gazebo/spawn_sdf_model service...')
         rospy.wait_for_service('/gazebo/spawn_sdf_model')
         spawn_sdf_model = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
         models_sdf = {Field.NORMAL: GlobalMapManager.get_sdf('normal_field'), 
-                      Field.CHARGER: GlobalMapManager.get_sdf('charger'), 
-                      Field.WHEEL_LUBRICATION: GlobalMapManager.get_sdf('wheels_lubrication')}
+                    Field.CHARGER: GlobalMapManager.get_sdf('charger'), 
+                    Field.WHEEL_LUBRICATION: GlobalMapManager.get_sdf('wheels_lubrication')}
 
         width = 11
         height = 11
@@ -88,7 +103,9 @@ class GlobalMapManager:
             rospy.loginfo('File with map fields types not available. Generating randomly...')
             map_fields = np.random.choice([0, 1, 2], (height, width), p=[normal_prob, self._chargers_prob, self._wheels_lubrication_prob])
             np.savetxt(os.path.join(pkg_path, 'data', 'map_fields.txt'), map_fields, fmt='%d')
-        cnt = 0
+        
+        cnts = {Field.CHARGER: 0, Field.WHEEL_LUBRICATION: 0, Field.NORMAL: 0}
+        names = {Field.CHARGER: 'charger', Field.WHEEL_LUBRICATION: 'wheels_lubrication', Field.NORMAL: 'normal'}
         for i in range(map_fields.shape[0]):
             for j in range(map_fields.shape[1]):
                 field_type = map_fields[i, j]
@@ -103,16 +120,17 @@ class GlobalMapManager:
                     continue
 
                 pose = Pose()
-                pose.position.x = field.x + 0.5
-                pose.position.y = field.y + 0.5
+                pose.position.x = field.x
+                pose.position.y = field.y
                 req = SpawnModelRequest()
-                req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.field_type]}{cnt}'
+                req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.field_type]}{cnts[field.field_type]}'
                 req.model_xml = models_sdf[field.field_type]
                 req.initial_pose = pose
                 req.reference_frame = 'world'
                 spawn_sdf_model.call(req)
-                cnt += 1
+                cnts[field.field_type] += 1
         self.publish()
+        self.publish_marker_array()
 
     def publish(self):
         global_map_msg = MapMsg()
@@ -121,18 +139,34 @@ class GlobalMapManager:
             global_map_msg.fields.append(field.get_field_msg())
         self._world_map_pub.publish(global_map_msg)
 
-
-if __name__ == '__main__':
-    try:
-        rospy.init_node('create_map')
-        global_map_manager = GlobalMapManager()
-
-        start = time.time()
-        global_map_manager.create_map()
-        stop = time.time()
-        rospy.loginfo(f'Creating map execution time: {stop - start} sec.')
-
-        rospy.loginfo('Map loaded')
-        rospy.spin()
-    except Exception as e:
-        rospy.logerr(f'Error while creating map with message: {e}')
+    def publish_marker_array(self):
+        try:
+            marker_array = MarkerArray()
+            cnts = {Field.CHARGER: 0, Field.WHEEL_LUBRICATION: 0, Field.NORMAL: 0}
+            names = {Field.CHARGER: 'charger', Field.WHEEL_LUBRICATION: 'wheels_lubrication', Field.NORMAL: 'normal'}
+            for field in self._world_map:
+                marker = Marker()
+                marker.header.stamp = rospy.Time().now()
+                marker.header.frame_id = 'odom'
+                marker.type = Marker.CUBE
+                marker.action = Marker.ADD
+                marker.pose.position = Point(x=field.x, y=field.y, z=-0.01)
+                marker.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
+                marker.scale = Vector3(x=1, y=1, z=0.005)
+                marker.ns = names[field.field_type]
+                marker.id = cnts[field.field_type]
+                cnts[field.field_type] += 1
+                if field.field_type == Field.CHARGER:
+                    marker.color = ColorRGBA(r=0, g=1, b=0, a=1)
+                elif field.field_type == Field.WHEEL_LUBRICATION:
+                    marker.color = ColorRGBA(r=1, g=0.5, b=0, a=1)
+                elif field.field_type == Field.NORMAL:
+                    marker.color = ColorRGBA(r=0.5, g=0.5, b=0.5, a=1)
+                marker.lifetime = rospy.Duration()
+                marker_array.markers.append(marker)
+            self._visualization_markers_pub.publish(marker_array)
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
+            raise

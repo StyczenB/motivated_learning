@@ -100,9 +100,9 @@ class Agent:
 
     def is_moving(self) -> bool:
         x_pos, y_pos, yaw = self.get_robot_pose()
-        x_changed = not math.isclose(x_pos, self._prev_x, rel_tol=1e-3) 
-        y_changed = not math.isclose(y_pos, self._prev_y, rel_tol=1e-3) 
-        yaw_changed = not math.isclose(yaw, self._prev_yaw, rel_tol=1e-1) 
+        x_changed = abs(x_pos - self._prev_x) > 0.001
+        y_changed = abs(y_pos - self._prev_y) > 0.001
+        yaw_changed = abs(yaw - self._prev_yaw) > 0.01
         return x_changed or y_changed or yaw_changed
 
     def get_robot_pose(self) -> (float, float, float):
@@ -139,5 +139,3 @@ if __name__ == '__main__':
             rate.sleep()
     except rospy.ROSInterruptException:
         pass
-
-
