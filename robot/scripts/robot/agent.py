@@ -2,7 +2,7 @@
 import rospy
 import sys
 from gazebo_msgs.srv import GetModelState, SetModelState
-from gazebo_msgs.msg import ModelState
+from gazebo_msgs.msg import ModelState, LinkStates
 from geometry_msgs.msg import Twist, Point
 from nav_msgs.msg import Odometry
 from robot_msgs.msg import StateMsg, MapMsg, FieldMsg
@@ -56,12 +56,14 @@ class Agent:
         curr_field = self.get_current_field()
         # Agent stopped on this field, not only going through it
         if not moving:
-            if curr_field.type == Field.CHARGER:
-                self._state = State.CHARGING
-            elif curr_field.type == Field.WHEEL_LUBRICATION:
+            if curr_field.type == Field.WHEEL_LUBRICATION:
                 self._moving_discharge_coeff = 1.0
                 self._wheel_lubrication_effect_start_time = time.time()  # effect is valid for 10 seconds
                 rospy.loginfo('Stepped on WHEEL_LUBRICATION field. Agent for 10 seconds will not use battery charge.')
+            elif curr_field.type == Field.CHARGER and self._battery_level < Agent.BATTERY_MAX:
+                self._state = State.CHARGING
+            else:
+                self._state = State.IDLE
 
         if self._state == State.IDLE:
             rospy.loginfo('State.IDLE')
@@ -127,6 +129,11 @@ class Agent:
         return agent_state
 
 
+def check_simulation_state():
+    # if this function returns gazebo is running
+    link_states = rospy.wait_for_message('/gazebo/link_states', LinkStates)
+
+
 if __name__ == '__main__':
     try:
         print('start')
@@ -135,6 +142,7 @@ if __name__ == '__main__':
         rospy.loginfo('Started node with agent state updaters.')
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
+            check_simulation_state()
             agent.step()
             rate.sleep()
     except rospy.ROSInterruptException:

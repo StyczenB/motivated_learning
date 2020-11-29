@@ -11,10 +11,11 @@ class Charger:
     CHARGER_MIN_VAL = 0.0
     CHARGING_INCREMENT = 0.001
 
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int, name: str):
         self._x: int = x
         self._y: int = y
         self._charger_value: float = Charger.CHARGER_MAX_VAL
+        self._name: str = name
 
     @property
     def x(self) -> int:
@@ -23,6 +24,14 @@ class Charger:
     @property
     def y(self) -> int:
         return self._y
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def charger_value(self) -> float:
+        return self._charger_value
 
     def draw_energy(self) -> float:
         if self._charger_value < 0.1:
@@ -36,10 +45,10 @@ class Charger:
         self._charger_value = max(min(self._charger_value, Charger.CHARGER_MAX_VAL), Charger.CHARGER_MIN_VAL)
 
     def __str__(self) -> str:
-        return f'x: {self._x}, y: {self._y} -> charger value: {self._charger_value}\n'
+        return f'name: {self.name}, x: {self.x}, y: {self.y} -> charger value: {self.charger_value}\n'
 
     def get_charger_state_msg(self) -> ChargerStateMsg:
-        return ChargerStateMsg(coords=Point(x=self._x, y=self._y), charger_value=self._charger_value)
+        return ChargerStateMsg(coords=Point(x=self.x, y=self.y), charger_value=self.charger_value, name=self.name)
 
 
 class ChargersManager:
@@ -54,7 +63,7 @@ class ChargersManager:
         rospy.loginfo('...topic \'global_world_map\' available')
         for field in global_map.fields:
             if field.type == Field.CHARGER:
-                charger = Charger(x=field.coords.x, y=field.coords.y)
+                charger = Charger(x=field.coords.x, y=field.coords.y, name=field.name)
                 self._chargers.append(charger)
         self.publish()
 

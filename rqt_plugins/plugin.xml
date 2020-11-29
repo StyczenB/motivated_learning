@@ -1,19 +1,14 @@
 <library path="src">
-  <class name="My Plugin" type="rqt_plugins.my_module.MyPlugin" base_class_type="rqt_gui_py::Plugin">
+  <class name="AgentDashboard" type="rqt_plugins.agent_dashboard.AgentDashboard" base_class_type="rqt_gui_py::Plugin">
     <description>
       An example Python GUI plugin to create a great user interface.
     </description>
     <qtgui>
-      
-      <group>
-        <label>Topics</label>
-      </group>
       <!-- <group> -->
-        <!-- <label>Subgroup</label> -->
+        <!-- <label>Topics</label> -->
       <!-- </group> -->
-      
-      <label>Chargers</label>
-      <icon type="theme">system-help</icon>
+      <label>Agent Dashboard</label>
+      <icon type="theme">folder</icon>
       <statustip>Great user interface to provide real value.</statustip>
     </qtgui>
   </class>

@@ -19,11 +19,12 @@ class Field:
     CHARGER = 1
     WHEEL_LUBRICATION = 2
 
-    def __init__(self, x: int, y: int, field_type: int, nr_visits: int = 0):
+    def __init__(self, x: int, y: int, field_type: int, name: str, nr_visits: int = 0):
         self._x = x
         self._y = y
         self._nr_visits = nr_visits
         self._field_type = field_type
+        self._name = name
 
     @property
     def x(self) -> int:
@@ -41,11 +42,15 @@ class Field:
     def field_type(self) -> int:
         return self._field_type
 
+    @property
+    def name(self) -> str:
+        return self._name
+
     def increment_nr_visits(self, increment_val = 1):
         self._nr_visits += increment_val
 
     def get_field_msg(self) -> FieldMsg:
-        return FieldMsg(coords=Point(x=self._x, y=self._y), nr_visits=self._nr_visits, type=self._field_type)
+        return FieldMsg(coords=Point(x=self.x, y=self.y), nr_visits=self.nr_visits, type=self.field_type, name=self.name)
 
 
 class GlobalMapManager:
@@ -89,8 +94,8 @@ class GlobalMapManager:
         rospy.wait_for_service('/gazebo/spawn_sdf_model')
         spawn_sdf_model = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
         models_sdf = {Field.NORMAL: GlobalMapManager.get_sdf('normal_field'), 
-                    Field.CHARGER: GlobalMapManager.get_sdf('charger'), 
-                    Field.WHEEL_LUBRICATION: GlobalMapManager.get_sdf('wheels_lubrication')}
+                      Field.CHARGER: GlobalMapManager.get_sdf('charger'),
+                      Field.WHEEL_LUBRICATION: GlobalMapManager.get_sdf('wheels_lubrication')}
 
         width = 11
         height = 11
@@ -105,30 +110,33 @@ class GlobalMapManager:
             np.savetxt(os.path.join(pkg_path, 'data', 'map_fields.txt'), map_fields, fmt='%d')
         
         cnts = {Field.CHARGER: 0, Field.WHEEL_LUBRICATION: 0, Field.NORMAL: 0}
-        names = {Field.CHARGER: 'charger', Field.WHEEL_LUBRICATION: 'wheels_lubrication', Field.NORMAL: 'normal'}
+        # names = {Field.CHARGER: 'charger', Field.WHEEL_LUBRICATION: 'wheels_lubrication', Field.NORMAL: 'normal'}
         for i in range(map_fields.shape[0]):
             for j in range(map_fields.shape[1]):
                 field_type = map_fields[i, j]
-                if i == map_fields.shape[0] // 2 and j == map_fields.shape[1] // 2: 
+                if i == map_fields.shape[0] // 2 and j == map_fields.shape[1] // 2:
                     field_type = Field.NORMAL
-                field = Field(x=int(i - map_fields.shape[0] // 2), y=int(j - map_fields.shape[1] // 2), field_type=field_type)
+                field = Field(x=int(i - map_fields.shape[0] // 2), y=int(j - map_fields.shape[1] // 2),
+                              field_type=field_type,
+                              name=f'{GlobalMapManager.FIELD_NAMES[field_type]}-{cnts[field_type]}')
                 self._world_map.append(field)
 
                 # Spawning in gazebo part
                 if field.field_type == Field.NORMAL:
                     # Spawn model only for non normal fields (to save time)
+                    cnts[Field.NORMAL] += 1
                     continue
 
                 pose = Pose()
                 pose.position.x = field.x
                 pose.position.y = field.y
                 req = SpawnModelRequest()
-                req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.field_type]}{cnts[field.field_type]}'
+                req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.field_type]}-{cnts[field.field_type]}'
                 req.model_xml = models_sdf[field.field_type]
                 req.initial_pose = pose
                 req.reference_frame = 'world'
-                spawn_sdf_model.call(req)
                 cnts[field.field_type] += 1
+                spawn_sdf_model.call(req)
         self.publish()
         self.publish_marker_array()
 
@@ -143,7 +151,7 @@ class GlobalMapManager:
         try:
             marker_array = MarkerArray()
             cnts = {Field.CHARGER: 0, Field.WHEEL_LUBRICATION: 0, Field.NORMAL: 0}
-            names = {Field.CHARGER: 'charger', Field.WHEEL_LUBRICATION: 'wheels_lubrication', Field.NORMAL: 'normal'}
+            # names = {Field.CHARGER: 'charger', Field.WHEEL_LUBRICATION: 'wheels_lubrication', Field.NORMAL: 'normal'}
             for field in self._world_map:
                 marker = Marker()
                 marker.header.stamp = rospy.Time().now()
@@ -153,7 +161,7 @@ class GlobalMapManager:
                 marker.pose.position = Point(x=field.x, y=field.y, z=-0.01)
                 marker.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
                 marker.scale = Vector3(x=1, y=1, z=0.005)
-                marker.ns = names[field.field_type]
+                marker.ns = GlobalMapManager.FIELD_NAMES[field.field_type]
                 marker.id = cnts[field.field_type]
                 cnts[field.field_type] += 1
                 if field.field_type == Field.CHARGER:
