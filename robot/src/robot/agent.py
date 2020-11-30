@@ -127,23 +127,3 @@ class Agent:
         agent_state.coords.x, agent_state.coords.y, agent_state.yaw = self.get_robot_pose() 
         self._state_pub.publish(agent_state)
         return agent_state
-
-
-def check_simulation_state():
-    # if this function returns gazebo is running
-    link_states = rospy.wait_for_message('/gazebo/link_states', LinkStates)
-
-
-if __name__ == '__main__':
-    try:
-        print('start')
-        rospy.init_node('robot', anonymous=True)
-        agent = Agent()
-        rospy.loginfo('Started node with agent state updaters.')
-        rate = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            check_simulation_state()
-            agent.step()
-            rate.sleep()
-    except rospy.ROSInterruptException:
-        pass
