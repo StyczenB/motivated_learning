@@ -127,16 +127,17 @@ class GlobalMapManager:
                     cnts[Field.NORMAL] += 1
                     continue
 
-                pose = Pose()
-                pose.position.x = field.x
-                pose.position.y = field.y
-                req = SpawnModelRequest()
-                req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.field_type]}-{cnts[field.field_type]}'
-                req.model_xml = models_sdf[field.field_type]
-                req.initial_pose = pose
-                req.reference_frame = 'world'
+                # pose = Pose()
+                # pose.position.x = field.x
+                # pose.position.y = field.y
+                # req = SpawnModelRequest()
+                # req.model_name = f'{GlobalMapManager.FIELD_NAMES[field.field_type]}-{cnts[field.field_type]}'
+                # req.model_xml = models_sdf[field.field_type]
+                # req.initial_pose = pose
+                # req.reference_frame = 'world'
+                # spawn_sdf_model.call(req)
+
                 cnts[field.field_type] += 1
-                spawn_sdf_model.call(req)
         self.publish()
         self.publish_marker_array()
 

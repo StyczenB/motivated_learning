@@ -2,25 +2,22 @@
   <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find commons)/config/python_logger.config"/>
   <env name="GAZEBO_MODEL_PATH" value="$(find turtlebot3_gazebo)/models/:$GAZEBO_MODEL_PATH"/>
   
+  <!-- Global parameters setup -->
   <param name="model_name" value="turtlebot3_waffle" />
+  <param name="continuous_movement" type="bool" value="false"/>
 
   <!-- <node pkg="turtlebot3_gazebo" type="kill.sh" name="kill_apps" output="screen"/> -->
   <include file="$(find turtlebot3_gazebo)/launch/simulation.launch"/>
   <include file="$(find turtlebot3_navigation)/launch/move_base.launch"/>
-  <!-- <include file="$(find turtlebot3_gazebo)/launch/algorithms.launch"/> -->
 
   <group ns="ml">
     <node pkg="environment" type="global_map_manager_node.py" name="global_map_manager" required="true" output="screen"/>
-    <node pkg="robot" type="update_agent_grid_coord.py" name="update_agent_grid_coord" required="true" output="screen"/>
-    <node pkg="robot" type="go_to_grid_cell_service.py" name="go_to_grid_cell_service" required="true" output="screen">
-      <param name="continuous_movement" type="bool" value="true"/>
-    </node>
-    <!-- <node pkg="robot" type="agent.py" name="agent" required="true" output="screen"/> -->
+    <node pkg="robot" type="movement_manager_node.py" name="movement_manager" required="true" output="screen"/>
     <node pkg="robot" type="main.py" name="main" required="true" output="screen"/>
+    <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/>
   </group>
 
-  <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/>
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>
 
-<!--  <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" args="&#45;&#45;perspective-file $(find rqt_plugin_chargers_topic)/config/robot.perspective"/>-->
-<!--  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>-->
+  <!-- <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/> -->
 </launch>

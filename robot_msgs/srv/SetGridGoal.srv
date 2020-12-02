@@ -1,2 +1,3 @@
 geometry_msgs/Point goal
+bool local  # robot can only move to neighbouring field
 ---

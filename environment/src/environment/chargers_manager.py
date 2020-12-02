@@ -67,7 +67,7 @@ class ChargersManager:
                 self._chargers.append(charger)
         self.publish()
 
-    def update(self):
+    def step(self):
         for charger in self._chargers:
             charger.charging()
         self.publish()
@@ -90,27 +90,3 @@ class ChargersManager:
         for charger in self._chargers:
             chargers_msg.chargers.append(charger.get_charger_state_msg())
         self._chargers_pub.publish(chargers_msg)
-
-
-if __name__ == '__main__':
-    try:
-        rospy.init_node('update_chargers', anonymous=True)
-
-        chargers_manager = ChargersManager()
-        rate = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            chargers_manager.update()
-            rate.sleep()
-
-        # print(chargers_manager)
-
-        # charger = chargers_manager.get_charger(-2, 0)
-        # energy = charger.draw_energy()
-        # energy = charger.draw_energy()
-        # print(chargers_manager)
-
-        # chargers_manager.update()
-        # print(chargers_manager)
-
-    except rospy.ROSInterruptException:
-        pass

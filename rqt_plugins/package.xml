@@ -53,6 +53,8 @@
   <depend>rqt_gui</depend>
   <depend>rqt_gui_py</depend>
   <depend>robot_msgs</depend>
+  <depend>robot</depend>
+  
   <!-- <build_export_depend>rospy</build_export_depend> -->
   <!-- <build_export_depend>rqt_gui</build_export_depend> -->
   <!-- <build_export_depend>rqt_gui_py</build_export_depend> -->

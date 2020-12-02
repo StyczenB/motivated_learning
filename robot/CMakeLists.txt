@@ -139,7 +139,7 @@ target_link_libraries(turtlebot3_robot_node
 
 catkin_install_python(PROGRAMS
   scripts/main.py
-  # scripts/robot/agent.py
+  scripts/movement_manager_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -589,8 +589,8 @@
     <rect>
      <x>10</x>
      <y>310</y>
-     <width>321</width>
-     <height>93</height>
+     <width>401</width>
+     <height>131</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1114,22 +1114,17 @@
       </attribute>
       <column>
        <property name="text">
-        <string>x</string>
+        <string>pose</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>y</string>
+        <string>coords</string>
        </property>
       </column>
       <column>
        <property name="text">
-        <string>yaw</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>battery</string>
+        <string>level</string>
        </property>
       </column>
       <column>
@@ -1149,7 +1144,7 @@
   <widget class="QWidget" name="verticalLayoutWidget_3">
    <property name="geometry">
     <rect>
-     <x>250</x>
+     <x>270</x>
      <y>10</y>
      <width>82</width>
      <height>79</height>
@@ -1164,7 +1159,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Simulation</string>
+       <string> Simulation</string>
       </property>
      </widget>
     </item>
@@ -1179,6 +1174,95 @@
      <widget class="QPushButton" name="unpauseSim">
       <property name="text">
        <string>Unpause</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>90</y>
+     <width>97</width>
+     <height>171</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="4" column="1">
+     <widget class="QPushButton" name="sendGoal">
+      <property name="text">
+       <string>Go!</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="xCoordEdit">
+      <property name="frame">
+       <bool>true</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="clearButtonEnabled">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QRadioButton" name="localRadioButton">
+      <property name="text">
+       <string>Local</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_6">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLabel" name="label_4">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Goal</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_5">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>x</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="yCoordEdit">
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QPushButton" name="cancelGoal">
+      <property name="text">
+       <string>Cancel</string>
       </property>
      </widget>
     </item>
