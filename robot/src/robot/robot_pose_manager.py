@@ -2,6 +2,7 @@
 import rospy
 from geometry_msgs.msg import Point
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Bool
 import math
 import tf
 import copy
@@ -37,7 +38,7 @@ class RobotPoseManager:
         self._prev_coords = copy.deepcopy(self._coords)
 
     def is_moving(self) -> bool:
-        continuous_movement = rospy.get_param('/continuous_movement', True)
+        continuous_movement = rospy.get_param('/continuous_movement', False)
         if continuous_movement:
             x_changed = abs(self._pose.x - self._prev_pose.x) > 0.001
             y_changed = abs(self._pose.y - self._prev_pose.y) > 0.001

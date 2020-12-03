@@ -1,3 +1,5 @@
 geometry_msgs/Point goal
 bool local  # robot can only move to neighbouring field
+bool continuous_movement  # whether robot moves continously using MoveBase for multiple time steps 
+                          # or change position instanously in one time step
 ---

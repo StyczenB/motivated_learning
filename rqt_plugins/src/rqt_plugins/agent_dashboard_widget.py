@@ -11,6 +11,7 @@ from robot.movement_manager import MovementManagerClient
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSlot as Slot
+from PyQt5.QtCore import pyqtSignal as Signal
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QTableWidget, QAbstractScrollArea, QAbstractItemView, QRadioButton, QLineEdit
 
@@ -21,6 +22,10 @@ class AgentDashboardWidget(QWidget):
     You can specify the topics that the topic pane.
     AgentDashboardWidget.start must be called in order to update topic pane.
     """
+
+    agent_state_signal = Signal(StateMsg)
+    chargers_signal = Signal(ChargersMsg)
+
     def __init__(self, plugin=None):
 
         super(AgentDashboardWidget, self).__init__()
@@ -50,12 +55,21 @@ class AgentDashboardWidget(QWidget):
         self.pauseSim.clicked.connect(self.pause_simulation)
         self.unpauseSim.clicked.connect(self.unpause_simulation)
 
+        self.agent_state_signal.connect(self.refresh_agent_state_window)
+        self.chargers_signal.connect(self.refresh_chargers_window)
+
+        self.localCheckBox.setChecked(rospy.get_param('/local', True))
+        self.continousCheckBox.setChecked(rospy.get_param('/continuous_movement', False))
+
     def send_goal(self):
-        local = self.localRadioButton.isChecked()
+        local = self.localCheckBox.isChecked() 
+        continous = self.continousCheckBox.isChecked()
+        rospy.set_param('/continuous_movement', continous)
+        rospy.set_param('/local', local)
         try:
             x_goal = int(self.xCoordEdit.text())
             y_goal = int(self.yCoordEdit.text())    
-            self._movement_manager.send_goal(x_goal, y_goal, local)
+            self._movement_manager.send_goal(x_goal, y_goal, local, continous)
         except ValueError as e:
             rospy.logwarn(f'send_goal error: {e}')
 
@@ -70,31 +84,13 @@ class AgentDashboardWidget(QWidget):
         self._chargers_sub = rospy.Subscriber(self._topics['chargers'], ChargersMsg, self.chargers_cb)
 
     def agent_state_cb(self, agent_state: StateMsg):
-        rospy.logdebug(f'AgentDashboardWidget: Waiting for {self._topics["agent_state"]} message...')
-        self._tableAgentState.setRowCount(1)
-        content = f'x: {agent_state.pose.x:.2f}\n'
-        content += f'y: {agent_state.pose.y:.2f}\n'
-        content += f'z: {agent_state.pose.z:.2f}'
-        self._tableAgentState.setItem(0, 0, QTableWidgetItem(content))
-        self._tableAgentState.setItem(0, 1, QTableWidgetItem(f'{agent_state.coords}'))
-        # yaw_degrees = agent_state.coords.x * 180 / math.pi
-        # self._tableAgentState.setItem(0, 2, QTableWidgetItem(f'{int(yaw_degrees)}'))
-    
-        battery_level_item = QTableWidgetItem(f'{agent_state.battery_level:.3f}')
-        if agent_state.battery_level < 0.1:
-            battery_level_item.setBackground(Qt.red)
-        elif agent_state.battery_level < 0.5:
-            battery_level_item.setBackground(Qt.yellow)
-        else:
-            battery_level_item.setBackground(Qt.green)
-        self._tableAgentState.setItem(0, 2, battery_level_item)
-        self._tableAgentState.setItem(0, 3, QTableWidgetItem(str(agent_state.state)))
-        self._tableAgentState.setItem(0, 4, QTableWidgetItem(self._states[agent_state.state]))
-        self._tableAgentState.resizeColumnsToContents()
-        self._tableAgentState.resizeRowsToContents()
+        self.agent_state_signal.emit(agent_state)
 
     def chargers_cb(self, chargers_state: ChargersMsg):
-        rospy.logdebug(f'AgentDashboardWidget: Waiting for {self._topics["chargers"]} message...')
+        self.chargers_signal.emit(chargers_state)
+
+    @Slot(ChargersMsg)
+    def refresh_chargers_window(self, chargers_state: ChargersMsg):
         self._tableChargersTopic.setRowCount(len(chargers_state.chargers))
         for i, charger in enumerate(chargers_state.chargers):
             self._tableChargersTopic.setItem(i, 0, QTableWidgetItem(charger.name))
@@ -111,6 +107,27 @@ class AgentDashboardWidget(QWidget):
         self._tableChargersTopic.resizeColumnsToContents()
         self._tableChargersTopic.resizeRowsToContents()
 
+    @Slot(StateMsg)
+    def refresh_agent_state_window(self, agent_state: StateMsg):
+        self._tableAgentState.setRowCount(1)
+        content = f'x: {agent_state.pose.x:.2f}\n'
+        content += f'y: {agent_state.pose.y:.2f}\n'
+        content += f'z: {agent_state.pose.z:.2f}'
+        self._tableAgentState.setItem(0, 0, QTableWidgetItem(content))
+        self._tableAgentState.setItem(0, 1, QTableWidgetItem(f'{agent_state.coords}'))
+        battery_level_item = QTableWidgetItem(f'{agent_state.battery_level:.3f}')
+        if agent_state.battery_level < 0.1:
+            battery_level_item.setBackground(Qt.red)
+        elif agent_state.battery_level < 0.5:
+            battery_level_item.setBackground(Qt.yellow)
+        else:
+            battery_level_item.setBackground(Qt.green)
+        self._tableAgentState.setItem(0, 2, battery_level_item)
+        self._tableAgentState.setItem(0, 3, QTableWidgetItem(str(agent_state.state)))
+        self._tableAgentState.setItem(0, 4, QTableWidgetItem(self._states[agent_state.state]))
+        self._tableAgentState.resizeColumnsToContents()
+        self._tableAgentState.resizeRowsToContents()
+        
     @Slot()
     def pause_simulation(self):
         self._pause_sim_client()

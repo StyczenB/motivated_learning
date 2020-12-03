@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import rospy
 import actionlib
+from std_msgs.msg import Bool
 from geometry_msgs.msg import Quaternion, Point
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from gazebo_msgs.srv import GetModelState, SetModelState
@@ -18,14 +19,9 @@ class MovementManagerClient:
         self._set_grid_goal_client.wait_for_service()
         self._cancel_grid_goal_client = rospy.ServiceProxy('cancel_grid_goal', CancelGridGoal)
         self._cancel_grid_goal_client.wait_for_service()
-        self._current_grid_coord = Point()
-        self._grid_coord = rospy.Subscriber('grid_coord', Point, self.grid_coord_cb)
-    
-    def grid_coord_cb(self, grid_coord: Point):
-        self._current_grid_coord = grid_coord
 
-    def send_goal(self, x: int, y: int, local: bool):
-        self._set_grid_goal_client(Point(x=x, y=y), local)
+    def send_goal(self, x: int, y: int, local=True, continuous_movement=False):
+        self._set_grid_goal_client(Point(x=x, y=y), local, continuous_movement)
 
     def cancel_goal(self):
         self._cancel_grid_goal_client()
@@ -33,15 +29,15 @@ class MovementManagerClient:
 
 class MovementManager:
     def __init__(self):
-        self._continuous_movement = rospy.get_param('/continuous_movement', True)
+        # self._continuous_movement = rospy.get_param('/continuous_movement', True)
         self._model_name = rospy.get_param('/model_name', 'turtlebot3_waffle')
-        if self._continuous_movement:
-            self._move_base_client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
-            self._move_base_client.wait_for_server()
-        else:
-            self._set_model_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState) 
-            self._set_model_state.wait_for_service()
-            rospy.loginfo('MovementManager: /gazebo/set_model_state service available')
+        # if self._continuous_movement:
+        self._move_base_client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
+        self._move_base_client.wait_for_server()
+        # else:
+        self._set_model_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState) 
+        self._set_model_state.wait_for_service()
+        rospy.loginfo('MovementManager: /gazebo/set_model_state service available')
         self._get_model_state = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
         self._set_grid_goal_server = rospy.Service('set_grid_goal', SetGridGoal, self.execute_cb)
         self._cancel_grid_goal_server = rospy.Service('cancel_grid_goal', CancelGridGoal, self.cancel_cb)
@@ -55,8 +51,8 @@ class MovementManager:
 
     def cancel_cb(self, req: CancelGridGoalRequest):
         rospy.loginfo('Canceling goal')
-        if self._continuous_movement:
-            self._move_base_client.cancel_all_goals()
+        # if self._continuous_movement:
+        self._move_base_client.cancel_all_goals()
         return CancelGridGoalResponse()
 
     def execute_cb(self, grid_goal: SetGridGoalRequest):
@@ -75,7 +71,7 @@ class MovementManager:
                     abs_local_goal = Point(x=1, y=1)
                 goal_world.x = self._current_grid_coords.x + abs_local_goal.x * (1 if diff_vec.x > 0 else -1)
                 goal_world.y = self._current_grid_coords.y + abs_local_goal.y * (1 if diff_vec.y > 0 else -1)
-        if self._continuous_movement:
+        if grid_goal.continuous_movement:
             g_orien = self.get_goal_orientation(goal_world)
             move_base_goal = MoveBaseGoal()
             move_base_goal.target_pose.header.frame_id = "odom"
