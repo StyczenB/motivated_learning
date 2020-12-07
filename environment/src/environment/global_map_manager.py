@@ -161,7 +161,7 @@ class GlobalMapManager:
                 marker.action = Marker.ADD
                 marker.pose.position = Point(x=field.x, y=field.y, z=-0.01)
                 marker.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
-                marker.scale = Vector3(x=1, y=1, z=0.005)
+                marker.scale = Vector3(x=0.95, y=0.95, z=0.005)
                 marker.ns = GlobalMapManager.FIELD_NAMES[field.field_type]
                 marker.id = cnts[field.field_type]
                 cnts[field.field_type] += 1
