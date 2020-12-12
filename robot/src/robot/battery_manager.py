@@ -32,7 +32,9 @@ class BatteryManager:
 
     def update_battery(self, update_value: float):
         if self._battery_level + update_value < 0:
-            rospy.logwarn('Battery level cannot be negative. Dropping update...')
+            rospy.logwarn(
+                'Battery level cannot be negative. Dropping update...')
         else:
             self._battery_level += update_value
-        self._battery_level = min(max(BatteryManager.BATTERY_MIN, self._battery_level), BatteryManager.BATTERY_MAX)
+        self._battery_level = min(
+            max(BatteryManager.BATTERY_MIN, self._battery_level), BatteryManager.BATTERY_MAX)
