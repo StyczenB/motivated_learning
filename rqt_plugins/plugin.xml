@@ -1,15 +1,16 @@
 <library path="src">
   <class name="AgentDashboard" type="rqt_plugins.agent_dashboard.AgentDashboard" base_class_type="rqt_gui_py::Plugin">
     <description>
-      An example Python GUI plugin to create a great user interface.
+      RQT plugin for displaying information about motivated learning agent and also manually sending
+      steering command to movement manger.
     </description>
     <qtgui>
       <!-- <group> -->
         <!-- <label>Topics</label> -->
       <!-- </group> -->
       <label>Agent Dashboard</label>
-      <icon type="theme">folder</icon>
-      <statustip>Great user interface to provide real value.</statustip>
+      <icon type="theme">dialog-error</icon>
+      <statustip>Dashboard for agent using motivated learning to explore environment.</statustip>
     </qtgui>
   </class>
 </library>

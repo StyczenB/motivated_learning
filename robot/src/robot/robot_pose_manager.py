@@ -3,7 +3,8 @@ import rospy
 from geometry_msgs.msg import Point
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool
-from robot_msgs.srv import IsMoving, IsMovingResponse, IsMovingRequest, PoseAndGridCoordsMsg
+from robot_msgs.srv import IsMoving, IsMovingResponse, IsMovingRequest
+from robot_msgs.msg import PoseAndGridCoordsMsg
 import math
 import tf
 import copy
@@ -15,7 +16,11 @@ class RobotPoseManagerClient:
         self._pose_and_grid_cell_coord_sub = rospy.Subscriber('pose_and_grid_coord', PoseAndGridCoordsMsg, self._pose_and_grid_coord_cb, queue_size=1)
         self._pose_and_grid_coords = PoseAndGridCoordsMsg()
 
-    def _pose_and_grid_coord_cb(self, data: PoseAndGridCoordsMsg)
+    def __del__(self):
+        self._pose_and_grid_cell_coord_sub.unregister()
+        self._service_client.close()
+
+    def _pose_and_grid_coord_cb(self, data: PoseAndGridCoordsMsg):
         self._pose_and_grid_coords = data
 
     def is_moving(self):
@@ -39,10 +44,10 @@ class RobotPoseManager:
     def __init__(self):
         self._pose_and_grid_cell = PoseAndGridCoordsMsg()
         self._prev_pose_and_grid_cell = PoseAndGridCoordsMsg()
-
+        self._is_moving = False
         self._odom_sub = rospy.Subscriber('/odom', Odometry, self._odom_cb, queue_size=1)
-        self._pose_and_grid_cell_coord_pub = rospy.Publisher('pose_and_grid_coord', PoseAndGridCoordsMsg, queue_size=1)
-        self._service_is_moving = rospy.Service('is_moving', IsMoving, _is_moving_service_handler)
+        self._pose_and_grid_cell_coord_pub = rospy.Publisher('pose_and_grid_coord', PoseAndGridCoordsMsg, queue_size=1, latch=True)
+        self._service_is_moving = rospy.Service('is_moving', IsMoving, self._is_moving_service_handler)
 
     def _odom_cb(self, data: Odometry):
         x_pos, y_pos = data.pose.pose.position.x, data.pose.pose.position.y
@@ -61,8 +66,7 @@ class RobotPoseManager:
         self._pose_and_grid_cell_coord_pub.publish(self._pose_and_grid_cell)
 
     def step(self):
-        self._prev_pose = copy.deepcopy(self._pose)
-        self._prev_coords = copy.deepcopy(self._coords)
+        self._prev_pose_and_grid_cell = copy.deepcopy(self._pose_and_grid_cell)
 
     def _is_moving_service_handler(self, req: IsMovingRequest) -> IsMovingResponse:
         res = IsMovingResponse()

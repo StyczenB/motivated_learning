@@ -1,5 +1,5 @@
 <launch>
-  <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find commons)/config/python_logger.config"/>
+  <!-- <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find commons)/config/python_logger.config"/> -->
   <env name="GAZEBO_MODEL_PATH" value="$(find turtlebot3_gazebo)/models/:$GAZEBO_MODEL_PATH"/>
   
   <!-- Global parameters setup. -->
@@ -12,13 +12,21 @@
   <include file="$(find turtlebot3_navigation)/launch/move_base.launch"/>
 
   <group ns="ml">
+    <!-- Global map provider -->
     <node pkg="environment" type="global_map_manager_node.py" name="global_map_manager" required="true" output="screen"/>
+
+    <!-- Manager for moving agent on the map using move_base package (continuous_movement == true) or immediate change of position -->
     <node pkg="robot" type="movement_manager_node.py" name="movement_manager" required="true" output="screen"/>
+
+    <!-- Main node for processing -->
     <node pkg="robot" type="main.py" name="main" required="true" output="screen"/>
-    <!-- <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/> -->
+
+    <!-- RQT agent dashboard -->
+    <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/>
   </group>
 
-  <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/> -->
+   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>
+<!--  <node pkg="rqt_topic" type="rqt_topic" name="rqt_gui"/>-->
 
   <!-- <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/> -->
 </launch>

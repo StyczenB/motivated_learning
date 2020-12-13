@@ -2,19 +2,24 @@
 import rospy
 from typing import List
 from robot_msgs.msg import MapMsg, FieldMsg, ChargerStateMsg, ChargersMsg
-from environment.global_map_manager import Field
+from robot_msgs.srv import GetChargerEnergy, GetChargerEnergyRequest, GetChargerEnergyResponse
+from .global_map_manager import Field
 from geometry_msgs.msg import Point
 
 
 class Charger:
-    CHARGER_MAX_VAL = 1.0
-    CHARGER_MIN_VAL = 0.0
+    """
+    Single charger class resposible to store information about position, name and current charge value.
+    """
+
+    CHARGER_MAX = 1.0
+    CHARGER_MIN = 0.0
     CHARGING_INCREMENT = 0.001
 
     def __init__(self, x: int, y: int, name: str):
         self._x: int = x
         self._y: int = y
-        self._charger_value: float = Charger.CHARGER_MAX_VAL
+        self._charger_value: float = Charger.CHARGER_MAX
         self._name: str = name
 
     @property
@@ -42,7 +47,7 @@ class Charger:
 
     def charging(self):
         self._charger_value += Charger.CHARGING_INCREMENT
-        self._charger_value = max(min(self._charger_value, Charger.CHARGER_MAX_VAL), Charger.CHARGER_MIN_VAL)
+        self._charger_value = max(min(self._charger_value, Charger.CHARGER_MAX), Charger.CHARGER_MIN)
 
     def __str__(self) -> str:
         return f'name: {self.name}, x: {self.x}, y: {self.y} -> charger value: {self.charger_value}\n'
@@ -52,14 +57,19 @@ class Charger:
 
 
 class ChargersManager:
+    """
+    Manager resposible for chargers on the map.
+    """
+
     def __init__(self):
         self._chargers: List[Charger] = []
         self._chargers_pub = rospy.Publisher('chargers', ChargersMsg, queue_size=1, latch=True)
+        self._get_charger_energy_srv = rospy.Service('get_charger_energy', GetChargerEnergy, self._get_charger_energy_handler)
         self.init_chargers()
 
     def init_chargers(self):
         rospy.loginfo('Waiting for \'global_world_map\' topic...')
-        global_map = rospy.wait_for_message('global_world_map', MapMsg)
+        global_map: MapMsg = rospy.wait_for_message('global_world_map', MapMsg)
         rospy.loginfo('...topic \'global_world_map\' available')
         for field in global_map.fields:
             if field.type == Field.CHARGER:
@@ -67,16 +77,19 @@ class ChargersManager:
                 self._chargers.append(charger)
         self.publish()
 
+    def _get_charger_energy_handler(self, req: GetChargerEnergyRequest) -> GetChargerEnergyResponse:
+        res = GetChargerEnergyResponse()
+        for charger in self._chargers:
+            if charger.x == req.coords.x and charger.y == req.coords.y:
+                res.energy = charger.draw_energy()
+                break
+        self.publish()
+        return res
+
     def step(self):
         for charger in self._chargers:
             charger.charging()
         self.publish()
-
-    def get_charger(self, x: int, y: int) -> Charger:
-        for charger in self._chargers:
-            if charger.x == x and charger.y == y:
-                return charger
-        return None
 
     def __str__(self):
         out = 'Chargers:\n'
@@ -90,3 +103,14 @@ class ChargersManager:
         for charger in self._chargers:
             chargers_msg.chargers.append(charger.get_charger_state_msg())
         self._chargers_pub.publish(chargers_msg)
+
+
+class ChargersManagerClient:
+    def __init__(self):
+        self._get_charger_energy_handler = rospy.ServiceProxy('get_charger_energy', GetChargerEnergy)
+        self._get_charger_energy_handler.wait_for_service()
+
+    def get_energy_from_charger(self, x: int, y: int) -> float:
+        req = GetChargerEnergyRequest(coords=Point(x=x, y=y))
+        res: GetChargerEnergyResponse = self._get_charger_energy_handler(req)
+        return res.energy
