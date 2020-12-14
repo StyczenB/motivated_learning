@@ -35,7 +35,7 @@ if __name__ == '__main__':
             check_simulation_state()  # This function only freeze running of loop when Gazebo simulation is paused
             agent.step()
             current_pains = pains.step()
-            print(current_pains)
+            # print(current_pains)
             rate.sleep()
     except rospy.ROSInterruptException:
         pass

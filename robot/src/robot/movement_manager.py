@@ -7,9 +7,11 @@ from gazebo_msgs.srv import GetModelState, SetModelState
 from gazebo_msgs.msg import ModelState
 from robot_msgs.srv import SetGridGoal, SetGridGoalRequest, SetGridGoalResponse
 from robot_msgs.srv import CancelGridGoal, CancelGridGoalRequest, CancelGridGoalResponse
+from robot_msgs.msg import PoseAndGridCoordsMsg
 import math
 import tf
 import threading
+import copy
 
 
 class MovementManagerClient:
@@ -40,8 +42,8 @@ class MovementManager:
         self._get_model_state = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
         self._set_grid_goal_server = rospy.Service('set_grid_goal', SetGridGoal, self.execute_cb)
         self._cancel_grid_goal_server = rospy.Service('cancel_grid_goal', CancelGridGoal, self.cancel_cb)
-        self._current_grid_coords = Point()
-        self._grid_coord_sub = rospy.Subscriber('grid_coord', Point, self.grid_coord_cb)
+        self._current_pose_and_grid_coords = PoseAndGridCoordsMsg()
+        self._pose_and_grid_coords_sub = rospy.Subscriber('pose_and_grid_coord', PoseAndGridCoordsMsg, self.pose_and_grid_coords_cb)
         self._lock = threading.Lock()
 
     def __del__(self):
@@ -50,11 +52,11 @@ class MovementManager:
         self._get_model_state.close()
         self._set_grid_goal_server.shutdown()
         self._cancel_grid_goal_server.shutdown()
-        self._grid_coord_sub.unregister()
+        self._pose_and_grid_coords_sub.unregister()
 
-    def grid_coord_cb(self, grid_coord: Point):
+    def pose_and_grid_coords_cb(self, pose_and_grid_coords: PoseAndGridCoordsMsg):
         with self._lock:
-            self._current_grid_coords = grid_coord
+            self._current_pose_and_grid_coords = pose_and_grid_coords
 
     def cancel_cb(self, req: CancelGridGoalRequest):
         rospy.loginfo('Canceling goal')
@@ -63,22 +65,23 @@ class MovementManager:
         return CancelGridGoalResponse()
 
     def execute_cb(self, grid_goal: SetGridGoalRequest):
-        rospy.loginfo(f'Executing, creating go to grid cell:\n{grid_goal}')
         goal_world = grid_goal.goal
         with self._lock:
-            if self._current_grid_coords.x == goal_world.x and self._current_grid_coords.y == goal_world.y:
-                return SetGridGoalResponse()
-            if grid_goal.local:
-                diff_vec = Point(x=goal_world.x - self._current_grid_coords.x,
-                                 y=goal_world.y - self._current_grid_coords.y)
-                if abs(diff_vec.x) > abs(diff_vec.y):
-                    abs_local_goal = Point(x=1, y=0)
-                elif abs(diff_vec.x) < abs(diff_vec.y):
-                    abs_local_goal = Point(x=0, y=1)
-                else:
-                    abs_local_goal = Point(x=1, y=1)
-                goal_world.x = self._current_grid_coords.x + abs_local_goal.x * (1 if diff_vec.x > 0 else -1)
-                goal_world.y = self._current_grid_coords.y + abs_local_goal.y * (1 if diff_vec.y > 0 else -1)
+            current_grid_coords = copy.deepcopy(self._current_pose_and_grid_coords.coords)
+        rospy.loginfo(f'Goal:\n{grid_goal}\nCurrent grid coords:\n{current_grid_coords}')
+        if current_grid_coords.x == goal_world.x and current_grid_coords.y == goal_world.y:
+            return SetGridGoalResponse()
+        if grid_goal.local:
+            diff_vec = Point(x=goal_world.x - current_grid_coords.x,
+                             y=goal_world.y - current_grid_coords.y)
+            if abs(diff_vec.x) > abs(diff_vec.y):
+                abs_local_goal = Point(x=1, y=0)
+            elif abs(diff_vec.x) < abs(diff_vec.y):
+                abs_local_goal = Point(x=0, y=1)
+            else:
+                abs_local_goal = Point(x=1, y=1)
+            goal_world.x = current_grid_coords.x + abs_local_goal.x * (1 if diff_vec.x > 0 else -1)
+            goal_world.y = current_grid_coords.y + abs_local_goal.y * (1 if diff_vec.y > 0 else -1)
         if grid_goal.continuous_movement:
             g_orien = self.get_goal_orientation(goal_world)
             move_base_goal = MoveBaseGoal()

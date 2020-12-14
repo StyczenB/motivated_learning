@@ -130,7 +130,10 @@ class AgentDashboardWidget(QWidget):
         content += f'y: {agent_state.pose.y:.2f}\n'
         content += f'z: {agent_state.pose.z:.2f}'
         self._tableAgentState.setItem(0, 0, QTableWidgetItem(content))
-        self._tableAgentState.setItem(0, 1, QTableWidgetItem(f'{agent_state.coords}'))
+        coords = f'x: {int(agent_state.coords.x)}\n'
+        coords += f'y: {int(agent_state.coords.y)}\n'
+        coords += f'z: {int(agent_state.coords.z)}'
+        self._tableAgentState.setItem(0, 1, QTableWidgetItem(coords))
         battery_level_item = QTableWidgetItem(f'{agent_state.battery_level:.3f}')
         if agent_state.battery_level < 0.1:
             battery_level_item.setBackground(Qt.red)
