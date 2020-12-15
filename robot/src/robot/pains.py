@@ -5,7 +5,7 @@ and calculate its pain associated with battery charge level.
 
 For curiosity it should get current map from robot's memory and 
 """
-import time
+import copy
 import rospy
 from robot_msgs.msg import AgentStateMsg, PainsMsg, MapMsg, FieldMsg
 from environment.gazebo_client import GazeboClient
@@ -20,6 +20,8 @@ class Pains:
         self._pains_pub = rospy.Publisher('pains', PainsMsg, queue_size=1, latch=True)
         self._agent_state_sub = rospy.Subscriber('agent_state', AgentStateMsg, self._agent_state_cb, queue_size=1)
         self._agent_state = AgentStateMsg()
+        self._prev_agent_state = AgentStateMsg()
+        self._last_internal_map_changed = GazeboClient.get_sim_time()
 
     def __del__(self):
         self._agent_state_sub.unregister()
@@ -36,14 +38,19 @@ class Pains:
         pains.header.stamp = rospy.Time.from_sec(GazeboClient.get_sim_time())
         pains.low_battery_level = (AgentStateMsg.BATTERY_MAX - self._agent_state.battery_level) ** 3
         pains.condition_of_wheels = self._agent_state.wheel_lubrication_counter
-        pains.homesickness = GazeboClient.get_sim_time() - self._agent_state.last_home_visit  # TODO: Should be scaled by some factor
+        pains.homesickness = 0.1 * (GazeboClient.get_sim_time() - self._agent_state.last_home_visit)  # TODO: Should be scaled by some factor
         pains.curiosity = self._curiosity_pain(self._agent_state.internal_map)
         self._pains_pub.publish(pains)
+        self._prev_agent_state = copy.deepcopy(self._agent_state)
         return pains
 
     def _curiosity_pain(self, internal_map: MapMsg) -> float:
-        if len(internal_map.fields) == 0:
-            return 1
+        if not self.internal_map_changed(internal_map):
+            return GazeboClient.get_sim_time() - self._last_internal_map_changed
+        self._last_internal_map_changed = GazeboClient.get_sim_time()
         nr_visits_to_new_fields = sum(map(lambda field: field.nr_visits if field.nr_visits < 3 else 0, internal_map.fields))
         nr_visits_to_all_fields = sum([field.nr_visits for field in internal_map.fields])
         return 1 - nr_visits_to_new_fields / nr_visits_to_all_fields  # FIXME: Probably needs debugging
+
+    def internal_map_changed(self, current_internal_map: MapMsg):
+        return len(current_internal_map.fields) != len(self._prev_agent_state.internal_map.fields)

@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 import rospy
-# import sys
+
 from gazebo_msgs.msg import LinkStates
-# from robot_msgs.msg import PainsMsg
+from robot_msgs.msg import PainsMsg
+
 from robot.agent import Agent
 from robot.pains import Pains
 from robot.robot_pose_manager import RobotPoseManager
 from environment.chargers_manager import ChargersManager
+
+PAIN_NAMES = {name: idx - 1 for idx, name in enumerate(PainsMsg.__slots__) if name != 'header'}
+PAIN_IDX = {idx: name for name, idx in PAIN_NAMES.items()}
+# print(PAIN_NAMES)
 
 
 def check_simulation_state():
@@ -15,8 +20,11 @@ def check_simulation_state():
     link_states = rospy.wait_for_message('/gazebo/link_states', LinkStates)
 
 
-# def get_dominant_pain(pains: PainsMsg) -> int:
-#     PainsMsg.__slots__
+def get_dominant_pain(pains: PainsMsg) -> (int, str):
+    pains_values = [pains.__getattribute__(pain_name) for pain_name in PAIN_NAMES.keys()]
+    dominant_pain_val = max(pains_values)
+    dominant_pain_idx = pains_values.index(dominant_pain_val)
+    return dominant_pain_idx, PAIN_IDX[dominant_pain_idx]
 
 
 if __name__ == '__main__':
@@ -36,6 +44,9 @@ if __name__ == '__main__':
             agent.step()
             current_pains = pains.step()
             # print(current_pains)
+            dominant_pain = get_dominant_pain(current_pains)
+            print(dominant_pain)
+
             rate.sleep()
     except rospy.ROSInterruptException:
         pass

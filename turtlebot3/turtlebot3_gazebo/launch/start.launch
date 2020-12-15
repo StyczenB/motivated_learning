@@ -19,7 +19,7 @@
     <node pkg="robot" type="movement_manager_node.py" name="movement_manager" required="true" output="screen"/>
 
     <!-- Main node for processing -->
-    <node pkg="robot" type="main.py" name="main" required="true" output="screen"/>
+<!--    <node pkg="robot" type="main.py" name="main" required="true" output="screen"/>-->
 
     <!-- RQT agent dashboard -->
     <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/>
