@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-from typing import List
 import rospy
 from robot_msgs.msg import AgentStateMsg, MapMsg, FieldMsg
 from environment.chargers_manager import ChargersManagerClient
-# from environment.global_map_manager import Field
 from environment.gazebo_client import GazeboClient
 from robot.robot_pose_manager import RobotPoseManagerClient  # RobotPoseManager
 from robot.battery_manager import BatteryManager
+
+from geometry_msgs.msg import Point, Quaternion, Vector3
+from std_msgs.msg import ColorRGBA
+from visualization_msgs.msg import MarkerArray, Marker
 
 
 class State:
@@ -23,6 +25,7 @@ class Agent:
         self._internal_map = MapMsg()
         self._state = State.IDLE
         self._state_pub = rospy.Publisher('agent_state', AgentStateMsg, queue_size=1, latch=True)
+        self._internal_map_visualization_pub = rospy.Publisher('/internal_map_visualization', MarkerArray, latch=True, queue_size=1)
 
         rospy.loginfo('Waiting for global_world_map message...')
         self._global_world_map: MapMsg = rospy.wait_for_message('global_world_map', MapMsg)
@@ -35,9 +38,23 @@ class Agent:
     def __del__(self):
         self._state_pub.unregister()
 
+    def action(self, dominant_pain: (int, str, float)):
+        pain_name = dominant_pain['name']
+        if pain_name == 'curiosity':
+            pass
+        elif pain_name == 'low_battery_level':
+            pass
+        elif pain_name == 'condition_of_wheels':
+            pass
+        elif pain_name == 'homesickness':
+            pass
+        else:
+            rospy.logwarn('Invalid pain. Dropping choosing action...')
+            return
+
     def step(self):
         rospy.logdebug('Agent.step called')
-        
+
         if self._battery_mngr.level < 0.1:
             rospy.logwarn('There is less then 0.1 of agent\'s battery...')
 
@@ -45,15 +62,15 @@ class Agent:
         if current_coords.x == 0 and current_coords.y == 0:
             self._last_home_visit = GazeboClient.get_sim_time()
 
-        moving = self._pos_mngr_client.is_moving()
-        self._state = State.MOVING if moving else State.IDLE
-
         if GazeboClient.get_sim_time() - self._wheel_lubrication_effect_start_time > 10:
             # effect of wheel lubrication has just wore off, using default moving discharge value
             self._battery_mngr.reset_discharge()
 
         curr_field = self.get_current_field()
         self.update_internal_map(curr_field)
+
+        moving = self._pos_mngr_client.is_moving()
+        self._state = State.MOVING if moving else State.IDLE
 
         # Agent stopped on this field, not only going through it
         if not moving:
@@ -84,6 +101,7 @@ class Agent:
             rospy.logerr('Invalid agent state.')
             rospy.signal_shutdown('Invalid agent state. Exiting...')
         self.publish()
+        self.publish_internal_map()
 
     def get_current_field(self) -> FieldMsg:
         curr_field = self.get_field_from_global_map(self._pos_mngr_client.coords.x, self._pos_mngr_client.coords.y)
@@ -104,6 +122,14 @@ class Agent:
         else:
             current_field.nr_visits += 1
             self._internal_map.fields.append(current_field)
+        # Add fields just outside view of agent so that curiosity can work
+        for x_offset in range(-1, 2):
+            for y_offset in range(-1, 2):
+                if x_offset == 0 and y_offset == 0:
+                    continue
+                coord_pos = {'x': self._pos_mngr_client.coords.x + x_offset,
+                             'y': self._pos_mngr_client.coords.y + y_offset}
+
 
     def publish(self) -> AgentStateMsg:
         agent_state = AgentStateMsg()
@@ -118,3 +144,37 @@ class Agent:
         agent_state.internal_map = self._internal_map
         self._state_pub.publish(agent_state)
         return agent_state
+
+    def publish_internal_map(self):
+        marker_array = MarkerArray()
+        for field in self._internal_map.fields:
+            marker = Marker()
+            marker.header.stamp = rospy.Time().now()
+            marker.header.frame_id = 'odom'
+            marker.type = Marker.CUBE
+            marker.action = Marker.ADD
+            marker.pose.position = Point(x=field.coords.x, y=field.coords.y, z=-0.01)
+            marker.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
+            marker.scale = Vector3(x=0.5, y=0.5, z=0.01)
+            marker.ns = field.name.split('-')[0]
+            marker.id = int(field.name.split('-')[1])
+            marker.color = ColorRGBA(r=1, g=0, b=0, a=0.5)
+            marker.lifetime = rospy.Duration()
+            marker_array.markers.append(marker)
+
+            text_marker = Marker()
+            text_marker.header.stamp = rospy.Time.now()
+            text_marker.header.frame_id = 'odom'
+            text_marker.type = Marker.TEXT_VIEW_FACING
+            text_marker.action = Marker.ADD
+            text_marker.pose.position = Point(x=field.coords.x, y=field.coords.y, z=0.5)
+            text_marker.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
+            text_marker.scale = Vector3(x=0, y=0, z=0.25)
+            text_marker.ns = 'text_' + field.name.split('-')[0]
+            text_marker.id = int(field.name.split('-')[1])
+            text_marker.color = ColorRGBA(r=1, g=1, b=1, a=1)
+            text_marker.text = str(field.nr_visits)
+            text_marker.lifetime = rospy.Duration()
+            marker_array.markers.append(text_marker)
+
+        self._internal_map_visualization_pub.publish(marker_array)

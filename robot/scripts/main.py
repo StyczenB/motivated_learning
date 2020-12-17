@@ -20,11 +20,11 @@ def check_simulation_state():
     link_states = rospy.wait_for_message('/gazebo/link_states', LinkStates)
 
 
-def get_dominant_pain(pains: PainsMsg) -> (int, str):
+def get_dominant_pain(pains: PainsMsg) -> (int, str, float):
     pains_values = [pains.__getattribute__(pain_name) for pain_name in PAIN_NAMES.keys()]
     dominant_pain_val = max(pains_values)
     dominant_pain_idx = pains_values.index(dominant_pain_val)
-    return dominant_pain_idx, PAIN_IDX[dominant_pain_idx]
+    return {'idx': dominant_pain_idx, 'name': PAIN_IDX[dominant_pain_idx], 'val': dominant_pain_val}
 
 
 if __name__ == '__main__':
