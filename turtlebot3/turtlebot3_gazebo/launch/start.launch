@@ -25,8 +25,7 @@
     <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/>
   </group>
 
-   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>
-<!--  <node pkg="rqt_topic" type="rqt_topic" name="rqt_gui"/>-->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>
+  <!--  <node pkg="rqt_topic" type="rqt_topic" name="rqt_gui"/>-->
 
-  <!-- <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/> -->
 </launch>

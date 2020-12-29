@@ -2,7 +2,7 @@
 import rospy
 from typing import List
 from robot_msgs.msg import MapMsg, FieldMsg, ChargerStateMsg, ChargersMsg
-from robot_msgs.srv import GetChargerEnergy, GetChargerEnergyRequest, GetChargerEnergyResponse
+from robot_msgs.srv import DrawChargerEnergy, DrawChargerEnergyRequest, DrawChargerEnergyResponse
 from .global_map_manager import Field
 from geometry_msgs.msg import Point
 
@@ -63,8 +63,8 @@ class ChargersManager:
 
     def __init__(self):
         self._chargers: List[Charger] = []
-        self._chargers_pub = rospy.Publisher('chargers', ChargersMsg, queue_size=1, latch=True)
-        self._get_charger_energy_srv = rospy.Service('get_charger_energy', GetChargerEnergy, self._get_charger_energy_handler)
+        self._chargers_pub = rospy.Publisher('chargers', ChargersMsg, queue_size=10, latch=True)
+        self._get_charger_energy_srv = rospy.Service('draw_charger_energy', DrawChargerEnergy, self._draw_charger_energy_handler)
         self.init_chargers()
 
     def init_chargers(self):
@@ -77,8 +77,8 @@ class ChargersManager:
                 self._chargers.append(charger)
         self.publish()
 
-    def _get_charger_energy_handler(self, req: GetChargerEnergyRequest) -> GetChargerEnergyResponse:
-        res = GetChargerEnergyResponse()
+    def _draw_charger_energy_handler(self, req: DrawChargerEnergyRequest) -> DrawChargerEnergyResponse:
+        res = DrawChargerEnergyResponse()
         for charger in self._chargers:
             if charger.x == req.coords.x and charger.y == req.coords.y:
                 res.energy = charger.draw_energy()
@@ -107,10 +107,19 @@ class ChargersManager:
 
 class ChargersManagerClient:
     def __init__(self):
-        self._get_charger_energy_handler = rospy.ServiceProxy('get_charger_energy', GetChargerEnergy)
-        self._get_charger_energy_handler.wait_for_service()
+        self._draw_charger_energy_handler = rospy.ServiceProxy('draw_charger_energy', DrawChargerEnergy)
+        self._draw_charger_energy_handler.wait_for_service()
 
-    def get_energy_from_charger(self, x: int, y: int) -> float:
-        req = GetChargerEnergyRequest(coords=Point(x=x, y=y))
-        res: GetChargerEnergyResponse = self._get_charger_energy_handler(req)
+    def draw_energy_from_charger(self, x: int, y: int) -> float:
+        req = DrawChargerEnergyRequest(coords=Point(x=x, y=y))
+        res: DrawChargerEnergyResponse = self._draw_charger_energy_handler(req)
         return res.energy
+
+    def get_charger_energy_level(self, x: int, y: int) -> float:
+        print('reading one message')
+        chargers: ChargersMsg = rospy.wait_for_message('chargers', ChargersMsg)
+        print('...done reading one message')
+        for charger in chargers.chargers:
+            if charger.coords.x == x and charger.coords.y == y:
+                return charger.charger_value
+        return -1

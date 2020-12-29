@@ -63,8 +63,8 @@ class GlobalMapManager:
         self._chargers_prob = chargers_prob
         self._wheels_lubrication_prob = wheels_lubrication_prob
         self._world_map: List[Field] = []
-        self._world_map_pub = rospy.Publisher('global_world_map', MapMsg, latch=True, queue_size=1)
-        self._visualization_markers_pub = rospy.Publisher('/visualization_marker_array', MarkerArray, latch=True, queue_size=1)
+        self._world_map_pub = rospy.Publisher('global_world_map', MapMsg, latch=True, queue_size=10)
+        self._vis_markers_pub = rospy.Publisher('/visualization_marker_array', MarkerArray, latch=True, queue_size=10)
         
     @property
     def world_map(self) -> List[Field]:
@@ -173,7 +173,7 @@ class GlobalMapManager:
                     marker.color = ColorRGBA(r=0.5, g=0.5, b=0.5, a=1)
                 marker.lifetime = rospy.Duration()
                 marker_array.markers.append(marker)
-            self._visualization_markers_pub.publish(marker_array)
+            self._vis_markers_pub.publish(marker_array)
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

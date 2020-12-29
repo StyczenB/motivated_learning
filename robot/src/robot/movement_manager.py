@@ -68,7 +68,7 @@ class MovementManager:
         goal_world = grid_goal.goal
         with self._lock:
             current_grid_coords = copy.deepcopy(self._current_pose_and_grid_coords.coords)
-        rospy.loginfo(f'Goal:\n{grid_goal}\nCurrent grid coords:\n{current_grid_coords}')
+        rospy.logdebug(f'Goal:\n{grid_goal}\nCurrent grid coords:\n{current_grid_coords}')
         if current_grid_coords.x == goal_world.x and current_grid_coords.y == goal_world.y:
             return SetGridGoalResponse()
         if grid_goal.local:

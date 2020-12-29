@@ -8,10 +8,7 @@ from robot.agent import Agent
 from robot.pains import Pains
 from robot.robot_pose_manager import RobotPoseManager
 from environment.chargers_manager import ChargersManager
-
-PAIN_NAMES = {name: idx - 1 for idx, name in enumerate(PainsMsg.__slots__) if name != 'header'}
-PAIN_IDX = {idx: name for name, idx in PAIN_NAMES.items()}
-# print(PAIN_NAMES)
+from robot.movement_manager import MovementManagerClient
 
 
 def check_simulation_state():
@@ -20,20 +17,14 @@ def check_simulation_state():
     link_states = rospy.wait_for_message('/gazebo/link_states', LinkStates)
 
 
-def get_dominant_pain(pains: PainsMsg) -> (int, str, float):
-    pains_values = [pains.__getattribute__(pain_name) for pain_name in PAIN_NAMES.keys()]
-    dominant_pain_val = max(pains_values)
-    dominant_pain_idx = pains_values.index(dominant_pain_val)
-    return {'idx': dominant_pain_idx, 'name': PAIN_IDX[dominant_pain_idx], 'val': dominant_pain_val}
-
-
 if __name__ == '__main__':
     try:
         rospy.init_node('robot', anonymous=True, log_level=rospy.INFO)
 
         chargers_manager = ChargersManager()
         robot_pose_manager = RobotPoseManager()
-        
+        movement_mngr_client = MovementManagerClient()
+
         agent = Agent()
         pains = Pains()
 
@@ -41,15 +32,22 @@ if __name__ == '__main__':
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             check_simulation_state()  # This function only freeze running of loop when Gazebo simulation is paused
+
             agent.step()
-            current_pains = pains.step()
+            current_pains, dominant_pain = pains.step()
             # print(current_pains)
-            dominant_pain = get_dominant_pain(current_pains)
             print(dominant_pain)
 
+            goal_coords = agent.action(dominant_pain)
+
+            movement_mngr_client.send_goal(goal_coords[0], goal_coords[1])
+
+            robot_pose_manager.step()
+            chargers_manager.step()
+
             rate.sleep()
-    except rospy.ROSInterruptException:
-        pass
+    except rospy.ROSInterruptException as e:
+        rospy.logerr(e)
 
     # check current position - pains, get state
     #
