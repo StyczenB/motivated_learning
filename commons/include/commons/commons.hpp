@@ -8,12 +8,12 @@
 namespace commons
 {
     using clock = std::chrono::system_clock;
-    static std::chrono::time_point<std::chrono::system_clock> now()
+    static std::chrono::time_point<clock> now()
     {
         return clock::now();
     }
 
-    static double elapsed(std::chrono::time_point<std::chrono::system_clock> stop, std::chrono::time_point<std::chrono::system_clock> start)
+    static double elapsed(std::chrono::time_point<clock> stop, std::chrono::time_point<clock> start)
     {
         return std::chrono::duration<double, std::milli>(stop - start).count();
     }
@@ -21,7 +21,7 @@ namespace commons
     struct Timer
     {
         std::string function_name;
-        std::chrono::time_point<std::chrono::system_clock> start;
+        std::chrono::time_point<clock> start;
 
         Timer(std::string function_name = "Function")
             : function_name(function_name)
