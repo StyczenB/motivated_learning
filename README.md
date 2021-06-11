@@ -8,3 +8,4 @@ For thesis go to: [Thesis](https://github.com/StyczenB/motivated_learning_thesis
 2. cd ~/catkin_ws
 3. chmod +x packages_to_install.sh
 4. ./packages_to_install.sh 
+
