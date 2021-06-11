@@ -46,6 +46,9 @@ class Agent:
         # self.clear_internal_map_markers()
 
     def action(self, dominant_pain: (int, str, float)) -> (float, float):
+        """
+        TODO
+        """
         pain_name = dominant_pain['name']
         x, y = 100, 100
         if pain_name == 'curiosity':

@@ -41,7 +41,7 @@ class AgentDashboardWidget(QWidget):
                         'agent_state': 'agent_state',
                         'pains': 'pains'}
 
-        self._movement_manager = MovementManagerClient()
+        self._movement_manager = MovementManagerClient(rospy.get_param('local'), rospy.get_param('continuous_movement'))
 
         rp = rospkg.RosPack()
         ui_file_path = os.path.join(rp.get_path('rqt_plugins'), 'resource', 'AgentDashboard.ui')

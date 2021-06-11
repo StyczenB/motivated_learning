@@ -6,6 +6,7 @@ and calculate its pain associated with battery charge level.
 For curiosity it should get current map from robot's memory and 
 """
 import copy
+from typing import Any, Dict, Tuple
 import rospy
 from robot_msgs.msg import AgentStateMsg, PainsMsg, MapMsg, FieldMsg
 from environment.gazebo_client import GazeboClient
@@ -32,7 +33,7 @@ class Pains:
     def _agent_state_cb(self, agent_state: AgentStateMsg):
         self._agent_state = agent_state
         
-    def step(self) -> (PainsMsg, (int, str, float)):
+    def step(self) -> Tuple[PainsMsg, Dict[str, Any]]:
         """
         Calculates pain values based on agent state.
         Publish them to 'pains' and returns to user.
@@ -49,8 +50,8 @@ class Pains:
         return pains, dominant_pain
 
     @staticmethod
-    def _get_dominant_pain(pains: PainsMsg) -> (int, str, float):
-        pains_values = [pains.__getattribute__(pain_name) for pain_name in Pains.PAIN_NAMES.keys()]
+    def _get_dominant_pain(pains: PainsMsg) -> Dict[str, Any]:
+        pains_values = [getattr(pains, pain_name) for pain_name in Pains.PAIN_NAMES.keys()]
         dominant_pain_val = max(pains_values)
         dominant_pain_idx = pains_values.index(dominant_pain_val)
         return {'idx': dominant_pain_idx, 'name': Pains.PAIN_IDX[dominant_pain_idx], 'val': dominant_pain_val}

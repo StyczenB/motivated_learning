@@ -21,9 +21,15 @@ if __name__ == '__main__':
     try:
         rospy.init_node('robot', anonymous=True, log_level=rospy.INFO)
 
+        local = rospy.get_param('local')
+        rospy.logwarn(f'local: {local}')
+
+        continuous_movement = rospy.get_param('continuous_movement')
+        rospy.logwarn(f'continuous_movement: {continuous_movement}')
+
         chargers_manager = ChargersManager()
         robot_pose_manager = RobotPoseManager()
-        movement_mngr_client = MovementManagerClient()
+        movement_mngr_client = MovementManagerClient(local, continuous_movement)
 
         agent = Agent()
         pains = Pains()
@@ -31,7 +37,8 @@ if __name__ == '__main__':
         rospy.loginfo('Started node with agent state updaters.')
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
-            check_simulation_state()  # This function only freeze running of loop when Gazebo simulation is paused
+            # This function only freeze running of loop when Gazebo simulation is paused
+            check_simulation_state()
 
             agent.step()
             current_pains, dominant_pain = pains.step()
@@ -48,6 +55,3 @@ if __name__ == '__main__':
             rate.sleep()
     except rospy.ROSInterruptException as e:
         rospy.logerr(e)
-
-    # check current position - pains, get state
-    #
