@@ -3,7 +3,7 @@ import rospy
 from typing import List
 from robot_msgs.msg import MapMsg, FieldMsg, ChargerStateMsg, ChargersMsg
 from robot_msgs.srv import DrawChargerEnergy, DrawChargerEnergyRequest, DrawChargerEnergyResponse
-from .global_map_manager import Field
+from .global_map_manager import FieldType
 from geometry_msgs.msg import Point
 
 
@@ -71,8 +71,9 @@ class ChargersManager:
         rospy.loginfo('Waiting for \'global_world_map\' topic...')
         global_map: MapMsg = rospy.wait_for_message('global_world_map', MapMsg)
         rospy.loginfo('...topic \'global_world_map\' available')
+        print(global_map)
         for field in global_map.fields:
-            if field.type == Field.CHARGER:
+            if field.type == FieldType.CHARGER:
                 charger = Charger(x=field.coords.x, y=field.coords.y, name=field.name)
                 self._chargers.append(charger)
         self.publish()

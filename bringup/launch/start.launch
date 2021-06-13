@@ -1,29 +1,33 @@
 <launch>
+  <!-- PARAMETERS -->
   <!-- <env name="ROS_PYTHON_LOG_CONFIG_FILE" value="$(find commons)/config/python_logger.config"/> -->
   <env name="GAZEBO_MODEL_PATH" value="$(find turtlebot3_gazebo)/models/:$GAZEBO_MODEL_PATH"/>
   
   <!-- Global parameters setup. -->
   <param name="model_name" value="turtlebot3_waffle" />
-  <param name="continuous_movement" type="bool" value="false"/>
+  <param name="continuous_movement" type="bool" value="true"/>
   <param name="local" type="bool" value="true"/>
 
-  <!-- <node pkg="turtlebot3_gazebo" type="kill.sh" name="kill_apps" output="screen"/> -->
+  <!-- Map size for random generation of map -->
+  <param name="random_map" type="bool" value="false"/>
+  <param name="x_size" type="int" value="10"/>
+  <param name="y_size" type="int" value="10"/>
+
+  <!-- NODES -->
   <include file="$(find bringup)/launch/simulation.launch"/>
   <include file="$(find turtlebot3_navigation)/launch/move_base.launch"/>
 
-  <!-- <group ns="ml"> -->
-    <!-- Global map provider -->
-    <node pkg="environment" type="global_map_manager_node.py" name="global_map_manager" required="true" output="screen"/>
+  <!-- Global map provider -->
+  <node pkg="environment" type="global_map_manager_node.py" name="global_map_manager" required="true" output="screen"/>
 
-    <!-- Manager for moving agent on the map using move_base package (continuous_movement == true) or immediate change of position -->
-    <node pkg="robot" type="movement_manager_node.py" name="movement_manager" required="true" output="screen"/>
+  <!-- Manager for moving agent on the map using move_base package (continuous_movement == true) or immediate change of position -->
+  <node pkg="robot" type="movement_manager_node.py" name="movement_manager" required="true" output="screen"/>
 
-    <!-- Main node for processing -->
-<!--    <node pkg="robot" type="main.py" name="main" required="true" output="screen"/>-->
+  <!-- Main node for processing -->
+  <!-- <node pkg="robot" type="main.py" name="main" required="true" output="screen"/> -->
 
-    <!-- RQT agent dashboard -->
-    <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/>
-  <!-- </group> -->
+  <!-- RQT agent dashboard -->
+  <node pkg="rqt_plugins" type="rqt_agent_dashboard.py" name="rqt_agent_dashboard" output="screen"/>
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>
   <!--  <node pkg="rqt_topic" type="rqt_topic" name="rqt_gui"/>-->

@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QTableWidget
 
 class AgentDashboardWidget(QWidget):
     """
-    main class inherits from the ui window class.
+    Main class inherits from the ui window class.
     You can specify the topics that the topic pane.
     AgentDashboardWidget.start must be called in order to update topic pane.
     """
@@ -41,7 +41,7 @@ class AgentDashboardWidget(QWidget):
                         'agent_state': 'agent_state',
                         'pains': 'pains'}
 
-        self._movement_manager = MovementManagerClient(rospy.get_param('local'), rospy.get_param('continuous_movement'))
+        self._movement_manager = MovementManagerClient()
 
         rp = rospkg.RosPack()
         ui_file_path = os.path.join(rp.get_path('rqt_plugins'), 'resource', 'AgentDashboard.ui')

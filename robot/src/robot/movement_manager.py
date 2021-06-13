@@ -15,16 +15,14 @@ import copy
 
 
 class MovementManagerClient:
-    def __init__(self, local: bool, continuous_movement: bool):
-        self._local = local
-        self._continuous_movement = continuous_movement
+    def __init__(self):
         self._set_grid_goal_client = rospy.ServiceProxy('set_grid_goal', SetGridGoal)
         self._set_grid_goal_client.wait_for_service()
         self._cancel_grid_goal_client = rospy.ServiceProxy('cancel_grid_goal', CancelGridGoal)
         self._cancel_grid_goal_client.wait_for_service()
 
-    def send_goal(self, x: int, y: int):
-        self._set_grid_goal_client(Point(x=x, y=y), self._local, self._continuous_movement)
+    def send_goal(self, x: int, y: int, local: bool, continuous_movement: bool):
+        self._set_grid_goal_client(Point(x=x, y=y), local, continuous_movement)
 
     def cancel_goal(self):
         self._cancel_grid_goal_client()
