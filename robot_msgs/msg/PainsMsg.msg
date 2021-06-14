@@ -1,7 +1,7 @@
-uint8 CURIOSITY = 0
-uint8 LOW_BATTERY_LEVEL = 1
-uint8 WHEELS = 2
-uint8 HOMESICKNESS = 3
+#uint8 CURIOSITY = 0
+#uint8 LOW_BATTERY_LEVEL = 1
+#uint8 WHEELS = 2
+#uint8 HOMESICKNESS = 3
 
 
 std_msgs/Header header

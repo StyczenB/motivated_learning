@@ -39,8 +39,6 @@ if __name__ == '__main__':
 
             agent.step()
             current_pains, dominant_pain = pains.step()
-            print(f'current_pains: {current_pains}')
-            print(f'dominant_pain: {dominant_pain}')
 
             goal_coords = agent.action(dominant_pain)
 

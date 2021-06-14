@@ -1,3 +1,4 @@
 <launch>
    <node pkg="robot" type="main.py" name="main" required="true" output="screen"/>
+   <node pkg="logging" type="main.py" name="logging_pains" output="screen"/>
 </launch>

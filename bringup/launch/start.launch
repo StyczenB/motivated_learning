@@ -31,5 +31,9 @@
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot3_navigation)/rviz/config.rviz"/>
   <!--  <node pkg="rqt_topic" type="rqt_topic" name="rqt_gui"/>-->
+    
+  <!-- Logging -->
+<!--  <node pkg="logging" type="main.py" name="logging_pains" output="screen"/> -->
 
 </launch>
+
