@@ -1,5 +1,6 @@
+import atexit
+import json
 from typing import Dict, List
-import matplotlib.pyplot as plt
 from collections import defaultdict
 import rospy
 from robot_msgs.msg import PainsMsg
@@ -9,12 +10,12 @@ class LoggingPainsData:
     def __init__(self):
         self._data: Dict[str, List[float]] = defaultdict(list)
         self._pains_sub = rospy.Subscriber('pains', PainsMsg, self._pains_callback)
-    
-    def __del__(self):
-        print('dumping to file')
-        print(self._data)
-        plt.plot('header', 'low_battery_level', data=self._data)
-        plt.show()
+        atexit.register(self._save_to_file)
+
+    def _save_to_file(self):
+        path = rospy.get_param('data_path')
+        with open(path, 'w') as f:
+            json.dump(self._data, f)
 
     def _pains_callback(self, pains_data: PainsMsg):
         self._data['header'].append(pains_data.header.stamp.secs + pains_data.header.stamp.nsecs / 1e9)
