@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
             goal_coords = agent.action(dominant_pain)
 
-            movement_mngr_client.send_goal(goal_coords[0], goal_coords[1], local, continuous_movement)
+#            movement_mngr_client.send_goal(goal_coords[0], goal_coords[1], local, continuous_movement)
 
             robot_pose_manager.step()
             chargers_manager.step()

@@ -4,7 +4,8 @@
     <scene>
       <ambient>0.4 0.4 0.4 1</ambient>
       <background>0.7 0.7 0.7 1</background>
-      <shadows>true</shadows>
+      <shadows>false</shadows>
+      <grid>true</grid>
     </scene>
 
     <!-- Bird view -->
@@ -26,11 +27,11 @@
     </include>
 
     <!-- Physics settings -->
-    <!-- <physics type="ode">
+    <physics type="ode">
       <real_time_update_rate>1000.0</real_time_update_rate>
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <ode>
+      <!-- <ode>
         <solver>
           <type>quick</type>
           <iters>150</iters>
@@ -44,8 +45,8 @@
           <contact_max_correcting_vel>2000.000000</contact_max_correcting_vel>
           <contact_surface_layer>0.01000</contact_surface_layer>
         </constraints>
-      </ode>
-    </physics> -->
+      </ode> -->
+    </physics> 
 
     <!-- Load world -->
     <!-- <include> -->

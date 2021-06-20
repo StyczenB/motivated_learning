@@ -5,9 +5,9 @@
   
   <!-- Global parameters setup. -->
   <param name="model_name" value="turtlebot3_waffle" />
-  <param name="continuous_movement" type="bool" value="true"/>
-  <param name="local" type="bool" value="true"/>
-  <param name="data_path" type="str" value="/home/bartek/software/ml_ws/data.json"/>
+  <param name="continuous_movement" type="bool" value="false"/>
+  <param name="local" type="bool" value="false"/>
+  <param name="data_path" type="str" value="/home/bartek/software/ml_ws/data_logs"/>
 
   <!-- Map size for random generation of map -->
   <param name="random_map" type="bool" value="false"/>
@@ -34,7 +34,10 @@
   <!--  <node pkg="rqt_topic" type="rqt_topic" name="rqt_gui"/>-->
     
   <!-- Logging -->
-<!--  <node pkg="logging" type="main.py" name="logging_pains" output="screen"/> -->
+  <node pkg="logging" type="logging_pains.py" name="logging_pains" output="screen"/>
 
+  <!-- Motivated learning agent -->
+<!--  <node pkg="robot" type="main.py" name="main" required="true" output="screen"/> -->
+  
 </launch>
 

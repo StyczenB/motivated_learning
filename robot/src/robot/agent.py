@@ -2,6 +2,7 @@
 from typing import List
 import math
 import random
+import copy
 
 import rospy
 from robot_msgs.msg import AgentStateMsg, MapMsg, FieldMsg
@@ -28,6 +29,7 @@ class Agent:
     def __init__(self):
         self._wheel_lubrication_effect_start_time = GazeboClient.get_sim_time()
         self._last_home_visit = GazeboClient.get_sim_time()
+        self._prev_field = FieldMsg()
         self._internal_map = MapMsg()
         self._state = State.IDLE
         self._state_pub = rospy.Publisher('agent_state', AgentStateMsg, queue_size=1, latch=True)
@@ -101,6 +103,7 @@ class Agent:
 
         curr_field = self.get_current_field()
         self.update_internal_map(curr_field)
+        self._prev_field = copy.deepcopy(curr_field)
 
         moving = self._pos_mngr_client.is_moving()
         self._state = State.MOVING if moving else State.IDLE
@@ -133,6 +136,7 @@ class Agent:
         else:
             rospy.logerr('Invalid agent state.')
             rospy.signal_shutdown('Invalid agent state. Exiting...')
+        self._prev_field = curr_field
         self.publish()
         self.publish_internal_map(self._internal_map.fields)
 
@@ -156,7 +160,8 @@ class Agent:
     def update_internal_map(self, current_field: FieldMsg):
         for field in self._internal_map.fields:
             if field.coords.x == current_field.coords.x and field.coords.y == current_field.coords.y:
-                field.nr_visits += 1
+                if current_field.coords.x != self._prev_field.coords.x or current_field.coords.y != self._prev_field.coords.y:
+                    field.nr_visits += 1
                 break
         else:
             # With logic below, this else should never occur

@@ -40,11 +40,13 @@ class Pains:
         """
         pains = PainsMsg()
         pains.header.stamp = rospy.Time.from_sec(GazeboClient.get_sim_time())
+        # Calculate pains
         pains.low_battery_level = (AgentStateMsg.BATTERY_MAX - self._agent_state.battery_level) ** 3
         pains.condition_of_wheels = self._agent_state.wheel_lubrication_counter
         pains.homesickness = 0.1 * (GazeboClient.get_sim_time() - self._agent_state.last_home_visit)  # TODO: Should be scaled by some factor
         pains.curiosity = self._curiosity_pain(self._agent_state.internal_map)
         dominant_pain = Pains._get_dominant_pain(pains)
+
         self._pains_pub.publish(pains)
         self._prev_agent_state = copy.deepcopy(self._agent_state)
         return pains, dominant_pain

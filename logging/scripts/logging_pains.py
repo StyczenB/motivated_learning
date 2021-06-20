@@ -1,3 +1,6 @@
+from datetime import datetime
+import os
+import time
 import atexit
 import json
 from typing import Dict, List
@@ -13,7 +16,11 @@ class LoggingPainsData:
         atexit.register(self._save_to_file)
 
     def _save_to_file(self):
-        path = rospy.get_param('data_path')
+        dir_path = rospy.get_param('data_path')
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        date_time = datetime.now().strftime('%Y%m%d%H%M%S')
+        path = os.path.join(dir_path, f'{date_time}.json')
         with open(path, 'w') as f:
             json.dump(self._data, f)
 
